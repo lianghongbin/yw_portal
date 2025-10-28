@@ -38,21 +38,13 @@
                     <div class="row mb-4">
                         <div class="col-md-3">
                             <div class="text-center p-2 border rounded">
-                                <h5 class="text-primary mb-1">{{ warehouse_data|length }}</h5>
+                                <h5 class="text-primary mb-1">{{ total_companies }}</h5>
                                 <small class="text-muted">劳务公司数</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-2 border rounded">
-                                <h5 class="text-success mb-1">
-                                    {% if warehouse_data %}
-                                        {% for data in warehouse_data %}
-                                            {% if data.report_date == selected_date %}{{ data.attendance_count }}{% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        0
-                                    {% endif %}
-                                </h5>
+                                <h5 class="text-success mb-1">{{ total_attendance }}</h5>
                                 <small class="text-muted">总到岗人数</small>
                             </div>
                         </div>
@@ -64,17 +56,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-2 border rounded">
-                                <h5 class="text-warning mb-1">
-                                    {% if warehouse_data %}
-                                        {% for data in warehouse_data %}
-                                            {% if data.report_date == selected_date %}
-                                                ¥{{ data.yesterday_cost|floatformat:0 }}
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% else %}
-                                        ¥0
-                                    {% endif %}
-                                </h5>
+                                <h5 class="text-warning mb-1">¥{{ total_cost|floatformat:0 }}</h5>
                                 <small class="text-muted">总成本</small>
                             </div>
                         </div>
@@ -181,7 +163,7 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    {% if warehouse_data %}
+                                    {% if company_stats %}
                                     <div class="table-responsive">
                                         <table class="table table-sm table-bordered">
                                             <thead class="table-light">
@@ -196,28 +178,26 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for data in warehouse_data %}
-                                                    {% if data.report_date == selected_date %}
-                                                    <tr>
-                                                        <td><span class="badge bg-light text-dark border">{{ data.contractor_company }}</span></td>
-                                                        <td><strong>{{ data.attendance_count }}</strong></td>
-                                                        <td><span class="text-info">{{ data.work_type }}</span></td>
-                                                        <td><strong>{{ data.actual_hours }}</strong></td>
-                                                        <td>
-                                                            <span class="text-danger">¥{{ data.yesterday_cost|floatformat:0 }}</span>
-                                                        </td>
-                                                        <td>
-                                                            <span class="text-secondary">¥{{ data.cost_per_ticket }}</span>
-                                                        </td>
-                                                        <td>
-                                                            {% if data.exception_notes and data.exception_notes != '无异常' %}
-                                                                <span class="text-danger">有异常</span>
-                                                            {% else %}
-                                                                <span class="text-success">正常</span>
-                                                            {% endif %}
-                                                        </td>
-                                                    </tr>
-                                                    {% endif %}
+                                                {% for company, stats in company_stats.items %}
+                                                <tr>
+                                                    <td><span class="badge bg-light text-dark border">{{ company }}</span></td>
+                                                    <td><strong>{{ stats.attendance }}</strong></td>
+                                                    <td><span class="text-info">{{ stats.work_type }}</span></td>
+                                                    <td><strong>{{ stats.hours }}</strong></td>
+                                                    <td>
+                                                        <span class="text-danger">¥{{ stats.cost|floatformat:0 }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-secondary">¥{{ stats.cost_per_ticket }}</span>
+                                                    </td>
+                                                    <td>
+                                                        {% if stats.has_exception %}
+                                                            <span class="text-danger">有异常</span>
+                                                        {% else %}
+                                                            <span class="text-success">正常</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>

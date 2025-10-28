@@ -480,14 +480,46 @@ def warehouse_module_view(request):
                 'exception_notes': exception_notes,
             })
     
-    # 计算总工时
-    total_hours = sum(data['actual_hours'] for data in warehouse_data if data['report_date'] == end_date)
+    # 基于实际数据计算统计数据
+    today_data = [data for data in warehouse_data if data['report_date'] == end_date]
+    
+    # 统计数据
+    total_companies = len(today_data)
+    total_attendance = sum(data['attendance_count'] for data in today_data)
+    total_hours = sum(data['actual_hours'] for data in today_data)
+    total_cost = sum(data['yesterday_cost'] for data in today_data)
+    
+    # 按公司统计
+    company_stats = {}
+    for data in today_data:
+        company = data['contractor_company']
+        if company not in company_stats:
+            company_stats[company] = {
+                'attendance': 0,
+                'hours': 0,
+                'cost': 0,
+                'cost_per_ticket': 0,
+                'work_type': '',
+                'has_exception': False
+            }
+        company_stats[company]['attendance'] += data['attendance_count']
+        company_stats[company]['hours'] += data['actual_hours']
+        company_stats[company]['cost'] += data['yesterday_cost']
+        company_stats[company]['cost_per_ticket'] = data['cost_per_ticket']
+        company_stats[company]['work_type'] = data['work_type']
+        if data['exception_notes'] and data['exception_notes'] != '无异常':
+            company_stats[company]['has_exception'] = True
     
     context = {
         'warehouse_data': warehouse_data,
-        'total_hours': total_hours,
         'available_dates': sample_dates,
         'selected_date': end_date,
+        'today_data': today_data,
+        'total_companies': total_companies,
+        'total_attendance': total_attendance,
+        'total_hours': total_hours,
+        'total_cost': total_cost,
+        'company_stats': company_stats,
     }
     return render(request, 'portal/warehouse_module.html', context)
 

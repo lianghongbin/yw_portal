@@ -83,11 +83,20 @@ class WarehouseReport(BaseModel):
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='warehouse_reports', verbose_name='日报')
     contractor_company = models.CharField(max_length=100, verbose_name='劳务公司')
     attendance_count = models.PositiveIntegerField(verbose_name='今日到岗人数')
+    actual_attendance_count = models.PositiveIntegerField(verbose_name='出勤人数', default=0)
     work_type = models.CharField(max_length=50, verbose_name='工种')
     actual_hours = models.PositiveIntegerField(verbose_name='实际工时')
-    yesterday_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='昨日成本')
-    cost_per_ticket = models.DecimalField(max_digits=6, decimal_places=2, verbose_name='单票成本')
+    packages_produced = models.PositiveIntegerField(verbose_name='产出包裹数', default=0)
+    hourly_rate = models.PositiveIntegerField(verbose_name='每小时工资', default=20)
+    sorting_count = models.PositiveIntegerField(verbose_name='分拣数量', default=0)
+    exchange_count = models.PositiveIntegerField(verbose_name='换单数量', default=0)
+    cost_per_ticket = models.DecimalField(max_digits=6, decimal_places=4, verbose_name='单票成本')
     exception_notes = models.TextField(blank=True, verbose_name='异常说明')
+    
+    # 总体统计字段（可选，用于显示总体数据）
+    total_sorting_count = models.PositiveIntegerField(verbose_name='总分拣数量', default=0, null=True, blank=True)
+    total_exchange_count = models.PositiveIntegerField(verbose_name='总换单数量', default=0, null=True, blank=True)
+    total_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='总成本', default=0, null=True, blank=True)
 
     class Meta:
         verbose_name = '仓内报告'

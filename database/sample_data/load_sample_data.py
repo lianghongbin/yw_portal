@@ -177,23 +177,68 @@ def create_sample_warehouse_reports(daily_reports):
     """创建示例仓内报告数据"""
     print("创建示例仓内报告数据...")
     
-    warehouses = ['LAX主仓', 'SFO分仓', 'SEA分仓', 'SAN分仓']
+    # 基于LAX日报实际仓内数据
+    contractor_data = {
+        'HR Solution': {
+            'base_attendance': 5,
+            'work_type': 'Regular Sorter',
+            'base_hours': 40,
+            'hourly_rate': 20,
+            'base_packages': 4500,
+            'sorting_count': 58341,
+            'exchange_count': 14211,
+            'cost_per_ticket': 0.0110,  # 工时总数 × 20 ÷ (分拣数量 + 换单数量)
+            'typical_issues': ['人员不足', '工时超时', '成本控制']
+        },
+        'Ocean': {
+            'base_attendance': 54,
+            'work_type': 'Regular Sorter', 
+            'base_hours': 545,
+            'hourly_rate': 20,
+            'base_packages': 38000,
+            'sorting_count': 108000,
+            'exchange_count': 32000,
+            'cost_per_ticket': 0.0779,  # 工时总数 × 20 ÷ (分拣数量 + 换单数量)
+            'typical_issues': ['设备故障', '人员调配', '效率提升']
+        }
+    }
     
     for daily_report in daily_reports:
-        for warehouse in warehouses:
-            if WarehouseReport.objects.filter(daily_report=daily_report, warehouse_name=warehouse).exists():
+        for company, company_info in contractor_data.items():
+            if WarehouseReport.objects.filter(daily_report=daily_report, contractor_company=company).exists():
                 continue
-                
+            
+            # 基于公司特点生成数据
+            attendance_variation = random.uniform(0.9, 1.1)
+            hours_variation = random.uniform(0.95, 1.05)
+            packages_variation = random.uniform(0.9, 1.1)
+            
+            attendance_count = int(company_info['base_attendance'] * attendance_variation)
+            actual_attendance_count = attendance_count + random.randint(0, 2)
+            actual_hours = int(company_info['base_hours'] * hours_variation)
+            packages_produced = int(company_info['base_packages'] * packages_variation)
+            
+            # 异常情况
+            has_exception = random.random() < 0.2  # 20%概率有异常
+            exception_notes = '无异常'
+            if has_exception:
+                exception_notes = random.choice(company_info['typical_issues'])
+            
             WarehouseReport.objects.create(
                 daily_report=daily_report,
-                warehouse_name=warehouse,
-                inbound_volume=random.randint(1000, 5000),
-                outbound_volume=random.randint(800, 4500),
-                inventory_count=random.randint(200, 1000),
-                processing_time=round(random.uniform(2.5, 8.0), 1),
-                efficiency_rate=round(random.uniform(85, 98), 2)
+                contractor_company=company,
+                attendance_count=attendance_count,
+                actual_attendance_count=actual_attendance_count,
+                work_type=company_info['work_type'],
+                actual_hours=actual_hours,
+                packages_produced=packages_produced,
+                hourly_rate=company_info['hourly_rate'],
+                sorting_count=company_info['sorting_count'],
+                exchange_count=company_info['exchange_count'],
+                cost_per_ticket=company_info['cost_per_ticket'],
+                exception_notes=exception_notes,
             )
-            print(f"  创建仓内报告: {warehouse} - {daily_report.report_date}")
+            print(f"  创建仓内报告: {company} - {daily_report.report_date}")
 
 def create_sample_pickup_reports(daily_reports):
     """创建示例揽收报告数据"""

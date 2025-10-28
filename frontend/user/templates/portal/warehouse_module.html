@@ -26,7 +26,7 @@
                                     <a href="{% url 'portal:warehouse_module' %}?date={{ date_option|date:'Y-m-d' }}" 
                                        class="btn {% if date_option == selected_date %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">
                                         <i class="fas fa-calendar-day me-1"></i>{{ date_option|date:"m-d" }}
-                                        {% if date_option == selected_date %}<span class="badge bg-light text-primary ms-1">今天</span>{% endif %}
+                                        {% if date_option == selected_date %}<span class="badge bg-light text-primary ms-1">选中</span>{% endif %}
                                     </a>
                                     {% endfor %}
                                 </div>
@@ -34,42 +34,37 @@
                         </div>
                     </div>
                     
-                    <!-- 统计概览 -->
+                    <!-- 汇总数据 -->
                     <div class="row mb-4">
-                        <div class="col-md-2">
-                            <div class="text-center p-2 border rounded">
-                                <h5 class="text-primary mb-1">{{ total_companies }}</h5>
-                                <small class="text-muted">劳务公司数</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="text-center p-2 border rounded">
-                                <h5 class="text-success mb-1">{{ total_attendance }}</h5>
-                                <small class="text-muted">总到岗人数</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="text-center p-2 border rounded">
-                                <h5 class="text-info mb-1">{{ total_hours }}</h5>
-                                <small class="text-muted">昨日总工时</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="text-center p-2 border rounded">
-                                <h5 class="text-warning mb-1">{{ total_packages|floatformat:0 }}</h5>
-                                <small class="text-muted">总产出包裹数</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="text-center p-2 border rounded">
-                                <h5 class="text-danger mb-1">¥{{ total_cost|floatformat:0 }}</h5>
-                                <small class="text-muted">总成本</small>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="text-center p-2 border rounded">
-                                <h5 class="text-secondary mb-1">¥{{ avg_cost_per_ticket|floatformat:4 }}</h5>
-                                <small class="text-muted">平均单票成本</small>
+                        <div class="col-12">
+                            <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i>汇总数据</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="12.5%">劳务公司数</th>
+                                            <th width="12.5%">总到岗人数</th>
+                                            <th width="12.5%">昨日总工时</th>
+                                            <th width="12.5%">总产出包裹数</th>
+                                            <th width="12.5%">总分拣数量</th>
+                                            <th width="12.5%">总换单数量</th>
+                                            <th width="12.5%">平均单票成本</th>
+                                            <th width="12.5%">备注</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-center"><strong class="text-primary">{{ total_companies }}</strong></td>
+                                            <td class="text-center"><strong class="text-success">{{ total_attendance }}</strong></td>
+                                            <td class="text-center"><strong class="text-info">{{ total_hours }}</strong></td>
+                                            <td class="text-center"><strong class="text-warning">{{ total_packages|floatformat:0 }}</strong></td>
+                                            <td class="text-center"><strong class="text-primary">{{ total_sorting_count|floatformat:0 }}</strong></td>
+                                            <td class="text-center"><strong class="text-warning">{{ total_exchange_count|floatformat:0 }}</strong></td>
+                                            <td class="text-center"><strong class="text-secondary">¥{{ avg_cost_per_ticket|floatformat:4 }}</strong></td>
+                                            <td class="text-center text-muted">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -99,64 +94,55 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr>
-                                                        <td><strong>劳务公司</strong></td>
-                                                        <td class="text-primary">{{ data.contractor_company }}</td>
-                                                        <td><strong>今日到岗</strong></td>
-                                                        <td class="text-success">{{ data.attendance_count }}人</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>工种</strong></td>
-                                                        <td class="text-info">{{ data.work_type }}</td>
-                                                        <td><strong>实际工时</strong></td>
-                                                        <td class="text-warning">{{ data.actual_hours }}小时</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>产出包裹数</strong></td>
-                                                        <td class="text-info">{{ data.packages_produced|floatformat:0 }}</td>
-                                                        <td><strong>昨日成本</strong></td>
-                                                        <td class="text-danger">¥{{ data.yesterday_cost|floatformat:0 }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>单票成本</strong></td>
-                                                        <td class="text-secondary">¥{{ data.cost_per_ticket }}</td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
+                                        <tr>
+                                            <td><strong>劳务公司</strong></td>
+                                            <td class="text-primary">{{ data.contractor_company }}</td>
+                                            <td><strong>今日到岗</strong></td>
+                                            <td class="text-success">{{ data.attendance_count }}人</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>出勤人数</strong></td>
+                                            <td class="text-info">{{ data.actual_attendance_count }}人</td>
+                                            <td><strong>实际工时</strong></td>
+                                            <td class="text-warning">{{ data.actual_hours }}小时</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>产出包裹数</strong></td>
+                                            <td class="text-info">{{ data.packages_produced|floatformat:0 }}</td>
+                                            <td><strong>工种</strong></td>
+                                            <td class="text-info">{{ data.work_type }}</td>
+                                        </tr>
+                                        {% if data.sorting_count > 0 or data.exchange_count > 0 %}
+                                        <tr>
+                                            <td><strong>分拣数量</strong></td>
+                                            <td class="text-primary">{{ data.sorting_count|floatformat:0 }}</td>
+                                            <td><strong>换单数量</strong></td>
+                                            <td class="text-warning">{{ data.exchange_count|floatformat:0 }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        <tr>
+                                            <td><strong>单票成本</strong></td>
+                                            <td class="text-secondary">¥{{ data.cost_per_ticket }}</td>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>异常说明</strong></td>
+                                            <td colspan="3">
+                                                {% if data.exception_notes and data.exception_notes != '无异常' %}
+                                                    <span class="text-danger">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                                        {{ data.exception_notes }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-success">
+                                                        <i class="fas fa-check-circle me-2"></i>
+                                                        无异常
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
                                                 </tbody>
                                             </table>
-                                        </div>
-                                        
-                                        <!-- 异常说明 -->
-                                        <div class="row">
-                                            <div class="col-12">
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-bordered">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th>异常说明</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td>
-                                                                    {% if data.exception_notes and data.exception_notes != '无异常' %}
-                                                                        <div class="text-danger">
-                                                                            <i class="fas fa-exclamation-triangle me-2"></i>
-                                                                            {{ data.exception_notes }}
-                                                                        </div>
-                                                                    {% else %}
-                                                                        <div class="text-success">
-                                                                            <i class="fas fa-check-circle me-2"></i>
-                                                                            无异常
-                                                                        </div>
-                                                                    {% endif %}
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
                                         </div>
                                         {% endif %}
                                     {% endfor %}
@@ -191,7 +177,10 @@
                                                     <th>工种</th>
                                                     <th>实际工时</th>
                                                     <th>产出包裹数</th>
-                                                    <th>昨日成本</th>
+                                                    {% if total_sorting_count > 0 or total_exchange_count > 0 %}
+                                                    <th>分拣数量</th>
+                                                    <th>换单数量</th>
+                                                    {% endif %}
                                                     <th>单票成本</th>
                                                     <th>异常状态</th>
                                                 </tr>
@@ -204,9 +193,22 @@
                                                     <td><span class="text-info">{{ stats.work_type }}</span></td>
                                                     <td><strong>{{ stats.hours }}</strong></td>
                                                     <td><strong>{{ stats.packages|floatformat:0 }}</strong></td>
+                                                    {% if total_sorting_count > 0 or total_exchange_count > 0 %}
                                                     <td>
-                                                        <span class="text-danger">¥{{ stats.cost|floatformat:0 }}</span>
+                                                        {% if stats.sorting_count > 0 %}
+                                                            <strong>{{ stats.sorting_count|floatformat:0 }}</strong>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
                                                     </td>
+                                                    <td>
+                                                        {% if stats.exchange_count > 0 %}
+                                                            <strong>{{ stats.exchange_count|floatformat:0 }}</strong>
+                                                        {% else %}
+                                                            <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    {% endif %}
                                                     <td>
                                                         <span class="text-secondary">¥{{ stats.cost_per_ticket }}</span>
                                                     </td>

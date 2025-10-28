@@ -418,14 +418,18 @@ def delivery_module_view(request):
 @login_required
 def warehouse_module_view(request):
     """仓内管理模块视图"""
-    # 获取最近7天的仓内数据
     end_date = date.today()
-    start_date = end_date - timedelta(days=7)
-    
-    reports = DailyReport.objects.filter(
-        is_published=True,
-        report_date__range=[start_date, end_date]
-    ).order_by('-report_date')
+    selected_date_str = request.GET.get('date')
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = end_date
+    else:
+        selected_date = end_date
+
+    # 获取最近7天的日期作为可用日期
+    sample_dates = [(end_date - timedelta(days=i)) for i in range(7)]
     
     warehouse_data = []
     
@@ -450,8 +454,6 @@ def warehouse_module_view(request):
     }
     
     # 生成示例数据
-    sample_dates = [(end_date - timedelta(days=i)) for i in range(7)]
-    
     for report_date in sample_dates:
         for company, company_info in contractor_data.items():
             # 基于公司特点生成数据
@@ -460,14 +462,22 @@ def warehouse_module_view(request):
             packages_variation = random.uniform(0.9, 1.1)
             
             attendance_count = int(company_info['base_attendance'] * attendance_variation)
+            # 出勤人数通常比到岗人数稍高（基于实际数据：HR Solution 5人，Ocean 55人）
+            actual_attendance_count = attendance_count + random.randint(0, 2)
             actual_hours = int(company_info['base_hours'] * hours_variation)
             packages_produced = int(company_info['base_packages'] * packages_variation)
             
-            # 计算成本：人数 × 工时 × 每小时20元
-            yesterday_cost = attendance_count * actual_hours * company_info['hourly_rate']
-            
-            # 计算单票成本：总成本 ÷ 产出包裹数
-            cost_per_ticket = round(yesterday_cost / packages_produced, 4) if packages_produced > 0 else 0
+            # 基于实际数据生成分拣数和换单数（而不是成本明细）
+            if company == 'HR Solution':
+                sorting_count = 58341
+                exchange_count = 14211
+                # 单票成本：工时总数 × 20 ÷ (分拣数量 + 换单数量) = 40 × 20 ÷ (58341 + 14211) = 800 ÷ 72552 ≈ 0.0110
+                cost_per_ticket = 0.0110
+            else:  # Ocean
+                sorting_count = 108000
+                exchange_count = 32000
+                # 单票成本：工时总数 × 20 ÷ (分拣数量 + 换单数量) = 545 × 20 ÷ (108000 + 32000) = 10900 ÷ 140000 ≈ 0.0779
+                cost_per_ticket = 0.0779
             
             # 异常情况
             has_exception = random.random() < 0.2  # 20%概率有异常
@@ -479,24 +489,31 @@ def warehouse_module_view(request):
                 'report_date': report_date,
                 'contractor_company': company,
                 'attendance_count': attendance_count,
+                'actual_attendance_count': actual_attendance_count,
                 'work_type': company_info['work_type'],
                 'actual_hours': actual_hours,
-                'yesterday_cost': yesterday_cost,
+                'packages_produced': packages_produced,
+                'hourly_rate': company_info['hourly_rate'],
+                'sorting_count': sorting_count,
+                'exchange_count': exchange_count,
                 'cost_per_ticket': cost_per_ticket,
-                'packages_produced': packages_produced,  # 添加产出包裹数
                 'exception_notes': exception_notes,
             })
     
     # 基于实际数据计算统计数据
-    today_data = [data for data in warehouse_data if data['report_date'] == end_date]
+    today_data = [data for data in warehouse_data if data['report_date'] == selected_date]
     
     # 统计数据
     total_companies = len(today_data)
     total_attendance = sum(data['attendance_count'] for data in today_data)
     total_hours = sum(data['actual_hours'] for data in today_data)
-    total_cost = sum(data['yesterday_cost'] for data in today_data)
     total_packages = sum(data['packages_produced'] for data in today_data)
-    avg_cost_per_ticket = round(total_cost / total_packages, 4) if total_packages > 0 else 0
+    avg_cost_per_ticket = round(sum(data['cost_per_ticket'] for data in today_data) / len(today_data), 4) if today_data else 0
+    
+    # 总体统计（分拣数量和换单数量总和）
+    total_sorting_count = sum(data['sorting_count'] for data in today_data)
+    total_exchange_count = sum(data['exchange_count'] for data in today_data)
+    total_cost = sum(data['attendance_count'] * data['actual_hours'] * data['hourly_rate'] for data in today_data)
     
     # 按公司统计
     company_stats = {}
@@ -506,16 +523,20 @@ def warehouse_module_view(request):
             company_stats[company] = {
                 'attendance': 0,
                 'hours': 0,
-                'cost': 0,
                 'packages': 0,
+                'sorting_count': 0,
+                'exchange_count': 0,
                 'cost_per_ticket': 0,
                 'work_type': '',
-                'has_exception': False
+                'has_exception': False,
+                'has_sorting_data': data['sorting_count'] > 0,  # 是否有分拣数据
+                'has_exchange_data': data['exchange_count'] > 0,  # 是否有换单数据
             }
         company_stats[company]['attendance'] += data['attendance_count']
         company_stats[company]['hours'] += data['actual_hours']
-        company_stats[company]['cost'] += data['yesterday_cost']
         company_stats[company]['packages'] += data['packages_produced']
+        company_stats[company]['sorting_count'] += data['sorting_count']
+        company_stats[company]['exchange_count'] += data['exchange_count']
         company_stats[company]['cost_per_ticket'] = data['cost_per_ticket']
         company_stats[company]['work_type'] = data['work_type']
         if data['exception_notes'] and data['exception_notes'] != '无异常':
@@ -524,14 +545,16 @@ def warehouse_module_view(request):
     context = {
         'warehouse_data': warehouse_data,
         'available_dates': sample_dates,
-        'selected_date': end_date,
+        'selected_date': selected_date,
         'today_data': today_data,
         'total_companies': total_companies,
         'total_attendance': total_attendance,
         'total_hours': total_hours,
-        'total_cost': total_cost,
         'total_packages': total_packages,
         'avg_cost_per_ticket': avg_cost_per_ticket,
+        'total_sorting_count': total_sorting_count,
+        'total_exchange_count': total_exchange_count,
+        'total_cost': total_cost,
         'company_stats': company_stats,
     }
     return render(request, 'portal/warehouse_module.html', context)

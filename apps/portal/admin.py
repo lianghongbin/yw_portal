@@ -67,7 +67,7 @@ class DeliveryReportInline(admin.TabularInline):
 class WarehouseReportInline(admin.TabularInline):
     model = WarehouseReport
     extra = 0
-    fields = ('contractor_company', 'attendance_count', 'work_type', 'actual_hours', 'yesterday_cost')
+    fields = ('contractor_company', 'attendance_count', 'actual_attendance_count', 'work_type', 'actual_hours', 'packages_produced', 'hourly_rate', 'sorting_count', 'exchange_count', 'cost_per_ticket', 'total_sorting_count', 'total_exchange_count', 'total_cost')
 
 
 class PickupReportInline(admin.TabularInline):
@@ -138,15 +138,16 @@ class DeliveryReportAdmin(admin.ModelAdmin):
 
 @admin.register(WarehouseReport)
 class WarehouseReportAdmin(admin.ModelAdmin):
-    list_display = ('daily_report', 'contractor_company', 'attendance_count', 'actual_hours', 'yesterday_cost')
+    list_display = ('daily_report', 'contractor_company', 'attendance_count', 'actual_attendance_count', 'actual_hours', 'packages_produced', 'sorting_count', 'exchange_count', 'cost_per_ticket')
     list_filter = ('contractor_company', 'work_type', 'daily_report__report_date')
     search_fields = ('contractor_company', 'work_type', 'daily_report__report_date')
     ordering = ('daily_report__report_date', 'contractor_company')
     
     fieldsets = (
         (None, {'fields': ('daily_report', 'contractor_company')}),
-        ('人员信息', {'fields': ('attendance_count', 'work_type', 'actual_hours')}),
-        ('成本信息', {'fields': ('yesterday_cost', 'cost_per_ticket')}),
+        ('人员信息', {'fields': ('attendance_count', 'actual_attendance_count', 'work_type', 'actual_hours', 'hourly_rate')}),
+        ('产出与成本', {'fields': ('packages_produced', 'sorting_count', 'exchange_count', 'cost_per_ticket')}),
+        ('总体统计', {'fields': ('total_sorting_count', 'total_exchange_count', 'total_cost')}),
         ('异常说明', {'fields': ('exception_notes',)}),
     )
 

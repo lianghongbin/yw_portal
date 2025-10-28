@@ -36,28 +36,40 @@
                     
                     <!-- 统计概览 -->
                     <div class="row mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="text-center p-2 border rounded">
                                 <h5 class="text-primary mb-1">{{ total_companies }}</h5>
                                 <small class="text-muted">劳务公司数</small>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="text-center p-2 border rounded">
                                 <h5 class="text-success mb-1">{{ total_attendance }}</h5>
                                 <small class="text-muted">总到岗人数</small>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="text-center p-2 border rounded">
                                 <h5 class="text-info mb-1">{{ total_hours }}</h5>
                                 <small class="text-muted">昨日总工时</small>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="text-center p-2 border rounded">
-                                <h5 class="text-warning mb-1">¥{{ total_cost|floatformat:0 }}</h5>
+                                <h5 class="text-warning mb-1">{{ total_packages|floatformat:0 }}</h5>
+                                <small class="text-muted">总产出包裹数</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center p-2 border rounded">
+                                <h5 class="text-danger mb-1">¥{{ total_cost|floatformat:0 }}</h5>
                                 <small class="text-muted">总成本</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center p-2 border rounded">
+                                <h5 class="text-secondary mb-1">¥{{ avg_cost_per_ticket|floatformat:4 }}</h5>
+                                <small class="text-muted">平均单票成本</small>
                             </div>
                         </div>
                     </div>
@@ -98,6 +110,12 @@
                                                         <td class="text-info">{{ data.work_type }}</td>
                                                         <td><strong>实际工时</strong></td>
                                                         <td class="text-warning">{{ data.actual_hours }}小时</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>产出包裹数</strong></td>
+                                                        <td class="text-info">{{ data.packages_produced|floatformat:0 }}</td>
+                                                        <td><strong>工时成本</strong></td>
+                                                        <td class="text-warning">¥{{ data.attendance_count|mul:data.actual_hours|mul:20|floatformat:0 }}</td>
                                                     </tr>
                                                     <tr>
                                                         <td><strong>昨日成本</strong></td>
@@ -172,6 +190,7 @@
                                                     <th>到岗人数</th>
                                                     <th>工种</th>
                                                     <th>实际工时</th>
+                                                    <th>产出包裹数</th>
                                                     <th>昨日成本</th>
                                                     <th>单票成本</th>
                                                     <th>异常状态</th>
@@ -184,6 +203,7 @@
                                                     <td><strong>{{ stats.attendance }}</strong></td>
                                                     <td><span class="text-info">{{ stats.work_type }}</span></td>
                                                     <td><strong>{{ stats.hours }}</strong></td>
+                                                    <td><strong>{{ stats.packages|floatformat:0 }}</strong></td>
                                                     <td>
                                                         <span class="text-danger">¥{{ stats.cost|floatformat:0 }}</span>
                                                     </td>

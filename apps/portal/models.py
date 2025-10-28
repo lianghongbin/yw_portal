@@ -79,7 +79,7 @@ class DeliveryReport(BaseModel):
 
 
 class WarehouseReport(BaseModel):
-    """仓内报告"""
+    """仓内报告 - 基于LAX日报实际数据结构"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='warehouse_reports', verbose_name='日报')
     contractor_company = models.CharField(max_length=100, verbose_name='劳务公司')
     attendance_count = models.PositiveIntegerField(verbose_name='今日到岗人数')

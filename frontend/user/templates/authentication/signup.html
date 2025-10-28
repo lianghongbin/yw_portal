@@ -1,0 +1,161 @@
+{% extends 'base/base.html' %}
+
+{% block title %}注册 - YW Portal{% endblock %}
+
+{% block login_content %}
+<div class="login-header">
+    <h2><i class="fas fa-user-plus"></i> 用户注册</h2>
+    <p>创建您的企业账户</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                {{ form.username }}
+                <label for="{{ form.username.id_for_label }}">用户名</label>
+                {% if form.username.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.username.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                {{ form.email }}
+                <label for="{{ form.email.id_for_label }}">邮箱</label>
+                {% if form.email.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                {{ form.first_name }}
+                <label for="{{ form.first_name.id_for_label }}">名字</label>
+                {% if form.first_name.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.first_name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                {{ form.last_name }}
+                <label for="{{ form.last_name.id_for_label }}">姓氏</label>
+                {% if form.last_name.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.last_name.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                {{ form.department }}
+                <label for="{{ form.department.id_for_label }}">部门</label>
+                {% if form.department.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.department.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                {{ form.position }}
+                <label for="{{ form.position.id_for_label }}">职位</label>
+                {% if form.position.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.position.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-floating mb-3">
+        {{ form.phone }}
+        <label for="{{ form.phone.id_for_label }}">电话（可选）</label>
+        {% if form.phone.errors %}
+            <div class="text-danger small mt-1">
+                {% for error in form.phone.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                {{ form.password1 }}
+                <label for="{{ form.password1.id_for_label }}">密码</label>
+                {% if form.password1.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.password1.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-floating mb-3">
+                {{ form.password2 }}
+                <label for="{{ form.password2.id_for_label }}">确认密码</label>
+                {% if form.password2.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.password2.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <button type="submit" class="btn btn-primary btn-login">
+        <i class="fas fa-user-plus me-2"></i>注册
+    </button>
+    
+    <div class="text-center mt-3">
+        <a href="{% url 'authentication:login' %}" class="text-decoration-none">
+            已有账号？立即登录
+        </a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base/base.html' %}
+
+{% block title %}成本分析 - YW Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-calculator me-2"></i>成本分析
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">数据时间范围：{{ date_range }}</h6>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-primary" onclick="refreshData()">
+                                <i class="fas fa-sync-alt me-1"></i>刷新数据
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {% if cost_data %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>报告日期</th>
+                                    <th>成本类别</th>
+                                    <th>计划成本</th>
+                                    <th>实际成本</th>
+                                    <th>差异</th>
+                                    <th>差异率(%)</th>
+                                    <th>异常说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in cost_data %}
+                                <tr>
+                                    <td>{{ data.report_date|date:"Y-m-d" }}</td>
+                                    <td>{{ data.cost_category }}</td>
+                                    <td>¥{{ data.planned_cost }}</td>
+                                    <td>¥{{ data.actual_cost }}</td>
+                                    <td>
+                                        <span class="{% if data.variance > 0 %}text-danger{% elif data.variance < 0 %}text-success{% else %}text-muted{% endif %}">
+                                            ¥{{ data.variance }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if data.variance_rate > 10 %}bg-danger{% elif data.variance_rate > 5 %}bg-warning{% elif data.variance_rate < -5 %}bg-success{% else %}bg-info{% endif %}">
+                                            {{ data.variance_rate }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if data.exception_notes %}
+                                            <span class="text-danger" title="{{ data.exception_notes }}">
+                                                <i class="fas fa-exclamation-triangle"></i> 有异常
+                                            </span>
+                                        {% else %}
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle"></i> 正常
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">暂无成本数据</h5>
+                        <p class="text-muted">请检查数据源或联系管理员</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshData() {
+    location.reload();
+}
+</script>
+{% endblock %}

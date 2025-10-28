@@ -1,0 +1,321 @@
+{% extends 'base/base.html' %}
+
+{% block title %}LAX日报详情 - {{ report.report_date }} - YW Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>LAX日报详情 - {{ report.report_date }}</h4>
+                <div>
+                    <span class="badge bg-primary me-2">报告人：{{ report.reporter.display_name }}</span>
+                    {% if report.is_published %}
+                        <span class="badge bg-success">已发布</span>
+                    {% else %}
+                        <span class="badge bg-warning">草稿</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if report.notes %}
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>备注</h6>
+                    <p class="mb-0">{{ report.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 配送报告 -->
+{% if delivery_reports %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-truck me-2"></i>配送报告</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>城市</th>
+                                <th>货量</th>
+                                <th>分箱数</th>
+                                <th>开放时间</th>
+                                <th>错误率</th>
+                                <th>第1天达成率</th>
+                                <th>第2天达成率</th>
+                                <th>第3天达成率</th>
+                                <th>滞留分箱</th>
+                                <th>异常说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dr in delivery_reports %}
+                            <tr>
+                                <td><span class="badge bg-primary">{{ dr.city }}</span></td>
+                                <td>{{ dr.cargo_volume }}</td>
+                                <td>{{ dr.box_count }}</td>
+                                <td>{{ dr.open_time }}</td>
+                                <td>
+                                    <span class="badge {% if dr.sorting_error_rate > 1 %}bg-danger{% else %}bg-success{% endif %}">
+                                        {{ dr.sorting_error_rate }}%
+                                    </span>
+                                </td>
+                                <td>{{ dr.delivery_rate_1 }}%</td>
+                                <td>{{ dr.delivery_rate_2 }}%</td>
+                                <td>{{ dr.delivery_rate_3 }}%</td>
+                                <td>
+                                    {% if dr.stranded_boxes > 0 %}
+                                        <span class="badge bg-warning">{{ dr.stranded_boxes }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if dr.exception_notes %}
+                                        <small class="text-danger">{{ dr.exception_notes|truncatechars:50 }}</small>
+                                    {% else %}
+                                        <small class="text-muted">无异常</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 仓内报告 -->
+{% if warehouse_reports %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-warehouse me-2"></i>仓内报告</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>劳务公司</th>
+                                <th>到岗人数</th>
+                                <th>工种</th>
+                                <th>实际工时</th>
+                                <th>昨日成本</th>
+                                <th>单票成本</th>
+                                <th>异常说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wr in warehouse_reports %}
+                            <tr>
+                                <td>{{ wr.contractor_company }}</td>
+                                <td>{{ wr.attendance_count }}</td>
+                                <td><span class="badge bg-info">{{ wr.work_type }}</span></td>
+                                <td>{{ wr.actual_hours }}</td>
+                                <td>¥{{ wr.yesterday_cost }}</td>
+                                <td>¥{{ wr.cost_per_ticket }}</td>
+                                <td>
+                                    {% if wr.exception_notes %}
+                                        <small class="text-danger">{{ wr.exception_notes|truncatechars:50 }}</small>
+                                    {% else %}
+                                        <small class="text-muted">无异常</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 揽收报告 -->
+{% if pickup_reports %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-hand-holding me-2"></i>揽收报告</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>揽收区域</th>
+                                <th>揽收情况</th>
+                                <th>回库件数</th>
+                                <th>异常说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pr in pickup_reports %}
+                            <tr>
+                                <td><span class="badge bg-primary">{{ pr.pickup_area }}</span></td>
+                                <td>{{ pr.pickup_situation }}</td>
+                                <td>{{ pr.return_count }}</td>
+                                <td>
+                                    {% if pr.exception_notes %}
+                                        <small class="text-danger">{{ pr.exception_notes|truncatechars:50 }}</small>
+                                    {% else %}
+                                        <small class="text-muted">无异常</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 空运报告 -->
+{% if air_transport_reports %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plane me-2"></i>空运报告</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>飞航城市</th>
+                                <th>揽收日</th>
+                                <th>货物出仓时间</th>
+                                <th>箱数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for atr in air_transport_reports %}
+                            <tr>
+                                <td><span class="badge bg-warning">{{ atr.flight_city }}</span></td>
+                                <td>{{ atr.pickup_date }}</td>
+                                <td>{{ atr.cargo_out_time }}</td>
+                                <td>{{ atr.box_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 干线报告 -->
+{% if linehaul_reports %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-road me-2"></i>干线报告</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>供应商</th>
+                                <th>发运类型</th>
+                                <th>车型及次数</th>
+                                <th>计费逻辑</th>
+                                <th>异常说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lr in linehaul_reports %}
+                            <tr>
+                                <td>{{ lr.supplier }}</td>
+                                <td><span class="badge bg-secondary">{{ lr.transport_type }}</span></td>
+                                <td>{{ lr.vehicle_type_count }}</td>
+                                <td>{{ lr.billing_logic }}</td>
+                                <td>
+                                    {% if lr.exception_notes %}
+                                        <small class="text-danger">{{ lr.exception_notes|truncatechars:50 }}</small>
+                                    {% else %}
+                                        <small class="text-muted">无异常</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 换单渠道 -->
+{% if change_order_channels %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>换单渠道</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>换单渠道</th>
+                                <th>换单量</th>
+                                <th>异常说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for coc in change_order_channels %}
+                            <tr>
+                                <td>{{ coc.channel_name }}</td>
+                                <td>{{ coc.change_order_count }}</td>
+                                <td>
+                                    {% if coc.exception_notes %}
+                                        <small class="text-danger">{{ coc.exception_notes|truncatechars:50 }}</small>
+                                    {% else %}
+                                        <small class="text-muted">无异常</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="text-center">
+            <a href="{% url 'portal:daily_reports' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>返回日报列表
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

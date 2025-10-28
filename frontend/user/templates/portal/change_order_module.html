@@ -1,0 +1,215 @@
+{% extends 'base/base.html' %}
+
+{% block title %}换单管理模块 - YW Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>换单管理模块</h4>
+                <small class="text-muted">数据范围：{{ date_range }}</small>
+            </div>
+            <div class="card-body">
+                {% if change_order_data %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>报告日期</th>
+                                    <th>换单渠道</th>
+                                    <th>换单量</th>
+                                    <th>异常说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in change_order_data %}
+                                <tr>
+                                    <td>{{ data.report_date }}</td>
+                                    <td>{{ data.channel_name }}</td>
+                                    <td>{{ data.change_order_count }}</td>
+                                    <td>
+                                        {% if data.exception_notes %}
+                                            <small class="text-danger" data-bs-toggle="tooltip" title="{{ data.exception_notes }}">
+                                                {{ data.exception_notes|truncatechars:50 }}
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">无异常</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 统计摘要 -->
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5>{{ change_order_data|length }}</h5>
+                                    <p class="mb-0">总记录数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% for data in change_order_data %}
+                                            {% if forloop.first %}{{ data.change_order_count }}{% endif %}
+                                        {% empty %}
+                                            0
+                                        {% endfor %}
+                                    </h5>
+                                    <p class="mb-0">最新换单量</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% regroup change_order_data by channel_name as channel_groups %}
+                                        {{ channel_groups|length }}
+                                    </h5>
+                                    <p class="mb-0">换单渠道数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% for data in change_order_data %}
+                                            {% if forloop.first %}{{ data.channel_name }}{% endif %}
+                                        {% empty %}
+                                            --
+                                        {% endfor %}
+                                    </h5>
+                                    <p class="mb-0">最新渠道</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 换单渠道分析 -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>换单渠道分析</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        {% regroup change_order_data by channel_name as channel_groups %}
+                                        {% for group in channel_groups %}
+                                        <div class="col-md-4 mb-3">
+                                            <div class="card border-success">
+                                                <div class="card-body text-center">
+                                                    <h5 class="card-title">{{ group.grouper }}</h5>
+                                                    <p class="card-text">
+                                                        {% for item in group.list %}
+                                                            {% if forloop.first %}
+                                                                换单量：{{ item.change_order_count }}<br>
+                                                                {% if item.exception_notes %}
+                                                                    <small class="text-danger">有异常</small>
+                                                                {% else %}
+                                                                    <small class="text-success">正常</small>
+                                                                {% endif %}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 换单趋势分析 -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>换单趋势分析</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>日期</th>
+                                                    {% regroup change_order_data by channel_name as channel_groups %}
+                                                    {% for group in channel_groups %}
+                                                    <th>{{ group.grouper }}</th>
+                                                    {% endfor %}
+                                                    <th>总计</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% regroup change_order_data by report_date as date_groups %}
+                                                {% for group in date_groups %}
+                                                <tr>
+                                                    <td>{{ group.grouper }}</td>
+                                                    {% for channel_group in channel_groups %}
+                                                    <td>
+                                                        {% for item in group.list %}
+                                                            {% if item.channel_name == channel_group.grouper %}
+                                                                {{ item.change_order_count }}
+                                                            {% endif %}
+                                                        {% empty %}
+                                                            0
+                                                        {% endfor %}
+                                                    </td>
+                                                    {% endfor %}
+                                                    <td>
+                                                        {% for item in group.list %}
+                                                            {% if forloop.first %}{{ item.change_order_count }}{% endif %}
+                                                        {% endfor %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">暂无换单数据</h5>
+                        <p class="text-muted">请等待管理员发布换单数据</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="text-center">
+            <a href="{% url 'portal:dashboard' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>返回仪表板
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 初始化工具提示
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+</script>
+{% endblock %}

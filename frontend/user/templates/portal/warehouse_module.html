@@ -1,0 +1,217 @@
+{% extends 'base/base.html' %}
+
+{% block title %}仓内管理模块 - YW Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-warehouse me-2"></i>仓内管理模块</h4>
+                <small class="text-muted">数据范围：{{ date_range }}</small>
+            </div>
+            <div class="card-body">
+                {% if warehouse_data %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>报告日期</th>
+                                    <th>劳务公司</th>
+                                    <th>到岗人数</th>
+                                    <th>工种</th>
+                                    <th>实际工时</th>
+                                    <th>昨日成本</th>
+                                    <th>单票成本</th>
+                                    <th>异常说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in warehouse_data %}
+                                <tr>
+                                    <td>{{ data.report_date }}</td>
+                                    <td>{{ data.contractor_company }}</td>
+                                    <td>{{ data.attendance_count }}</td>
+                                    <td><span class="badge bg-info">{{ data.work_type }}</span></td>
+                                    <td>{{ data.actual_hours }}</td>
+                                    <td>¥{{ data.yesterday_cost }}</td>
+                                    <td>¥{{ data.cost_per_ticket }}</td>
+                                    <td>
+                                        {% if data.exception_notes %}
+                                            <small class="text-danger" data-bs-toggle="tooltip" title="{{ data.exception_notes }}">
+                                                {{ data.exception_notes|truncatechars:30 }}
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">无异常</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 统计摘要 -->
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5>{{ warehouse_data|length }}</h5>
+                                    <p class="mb-0">总记录数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% for data in warehouse_data %}
+                                            {% if forloop.first %}{{ data.attendance_count }}{% endif %}
+                                        {% empty %}
+                                            0
+                                        {% endfor %}
+                                    </h5>
+                                    <p class="mb-0">最新到岗人数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% for data in warehouse_data %}
+                                            {% if forloop.first %}{{ data.actual_hours }}{% endif %}
+                                        {% empty %}
+                                            0
+                                        {% endfor %}
+                                    </h5>
+                                    <p class="mb-0">最新工时</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% for data in warehouse_data %}
+                                            {% if forloop.first %}¥{{ data.yesterday_cost }}{% endif %}
+                                        {% empty %}
+                                            ¥0
+                                        {% endfor %}
+                                    </h5>
+                                    <p class="mb-0">最新成本</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 成本趋势分析 -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>成本分析</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6>各劳务公司成本对比</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>劳务公司</th>
+                                                            <th>总成本</th>
+                                                            <th>平均单票成本</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% regroup warehouse_data by contractor_company as company_groups %}
+                                                        {% for group in company_groups %}
+                                                        <tr>
+                                                            <td>{{ group.grouper }}</td>
+                                                            <td>
+                                                                {% for item in group.list %}
+                                                                    {% if forloop.first %}¥{{ item.yesterday_cost }}{% endif %}
+                                                                {% endfor %}
+                                                            </td>
+                                                            <td>
+                                                                {% for item in group.list %}
+                                                                    {% if forloop.first %}¥{{ item.cost_per_ticket }}{% endif %}
+                                                                {% endfor %}
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>工时效率分析</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>工种</th>
+                                                            <th>平均工时</th>
+                                                            <th>平均到岗人数</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% regroup warehouse_data by work_type as work_groups %}
+                                                        {% for group in work_groups %}
+                                                        <tr>
+                                                            <td>{{ group.grouper }}</td>
+                                                            <td>
+                                                                {% for item in group.list %}
+                                                                    {% if forloop.first %}{{ item.actual_hours }}{% endif %}
+                                                                {% endfor %}
+                                                            </td>
+                                                            <td>
+                                                                {% for item in group.list %}
+                                                                    {% if forloop.first %}{{ item.attendance_count }}{% endif %}
+                                                                {% endfor %}
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-warehouse fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">暂无仓内数据</h5>
+                        <p class="text-muted">请等待管理员发布仓内数据</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="text-center">
+            <a href="{% url 'portal:dashboard' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>返回仪表板
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 初始化工具提示
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+</script>
+{% endblock %}

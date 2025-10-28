@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}YW Portal{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --light-bg: #f8f9fa;
+            --dark-bg: #2c3e50;
+            --sidebar-width: 250px;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .main-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--dark-bg) 0%, #34495e 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .sidebar-header h4 {
+            margin: 0;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .sidebar-menu .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-menu .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            border-left-color: var(--secondary-color);
+        }
+        
+        .sidebar-menu .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.15);
+            border-left-color: var(--secondary-color);
+        }
+        
+        .sidebar-menu .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        /* 下拉菜单样式 */
+        .sidebar-menu .dropdown-menu {
+            background: rgba(0,0,0,0.9);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            margin-left: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .sidebar-menu .dropdown-item {
+            color: rgba(255,255,255,0.9);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-menu .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .sidebar-menu .dropdown-item:hover {
+            color: white;
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+        
+        .sidebar-menu .dropdown-item.active {
+            color: white;
+            background: rgba(52, 152, 219, 0.3);
+        }
+        
+        .sidebar-menu .dropdown-toggle::after {
+            margin-left: auto;
+        }
+        
+        .content-area {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            background: var(--light-bg);
+            min-height: 100vh;
+        }
+        
+        .top-navbar {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .main-content {
+            padding: 2rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 1rem 1.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #5dade2);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stats-card h3 {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .stats-card p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-header h2 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header p {
+            color: #6c757d;
+            margin: 0;
+        }
+        
+        .form-floating {
+            margin-bottom: 1rem;
+        }
+        
+        .form-floating .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 1rem 0.75rem;
+        }
+        
+        .form-floating .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .content-area {
+                margin-left: 0;
+            }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .content-area {
+                margin-left: 0;
+            }
+            
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 1001;
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                padding: 0.5rem;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+            
+            .table-responsive {
+                font-size: 0.8rem;
+            }
+            
+            .btn-block {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .metric-card {
+                margin-bottom: 1rem;
+            }
+            
+            .metric-value {
+                font-size: 1.5rem;
+            }
+            
+            .stats-card h3 {
+                font-size: 1.5rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .chart-container {
+                height: 200px !important;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .content-area {
+                padding: 0.5rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+            }
+            
+            .table th,
+            .table td {
+                padding: 0.25rem;
+                font-size: 0.75rem;
+            }
+            
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .metric-value {
+                font-size: 1.2rem;
+            }
+            
+            .metric-label {
+                font-size: 0.8rem;
+            }
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- 移动端菜单按钮 -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <div class="main-container">
+        <!-- 左侧边栏 -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h4><i class="fas fa-building"></i> YW Portal</h4>
+            </div>
+            <div class="sidebar-menu">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'portal:dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i> 仪表板
+                        </a>
+                    </li>
+                    
+                    <!-- LAX日报业务模块 -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'daily_reports' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:daily_reports' %}">
+                            <i class="fas fa-calendar-day"></i> LAX日报
+                        </a>
+                    </li>
+                    
+                    <!-- 运营管理 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cogs"></i> 运营管理
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="operationsDropdown">
+                            <li><a class="dropdown-item {% if 'delivery_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:delivery_module' %}">
+                                <i class="fas fa-truck me-2"></i>配送管理
+                            </a></li>
+                            <li><a class="dropdown-item {% if 'warehouse_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:warehouse_module' %}">
+                                <i class="fas fa-warehouse me-2"></i>仓内管理
+                            </a></li>
+                            <li><a class="dropdown-item {% if 'pickup_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:pickup_module' %}">
+                                <i class="fas fa-hand-holding me-2"></i>揽收管理
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- 运输管理 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="transportDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-shipping-fast"></i> 运输管理
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="transportDropdown">
+                            <li><a class="dropdown-item {% if 'airtransport_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:airtransport_module' %}">
+                                <i class="fas fa-plane me-2"></i>空运管理
+                            </a></li>
+                            <li><a class="dropdown-item {% if 'linehaul_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:linehaul_module' %}">
+                                <i class="fas fa-road me-2"></i>干线管理
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- 设备管理 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="equipmentDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-tools"></i> 设备管理
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="equipmentDropdown">
+                            <li><a class="dropdown-item {% if 'sorting_machine_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:sorting_machine_module' %}">
+                                <i class="fas fa-cog me-2"></i>分拣机管理
+                            </a></li>
+                            <li><a class="dropdown-item {% if 'equipment_maintenance_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:equipment_maintenance_module' %}">
+                                <i class="fas fa-wrench me-2"></i>设备维护
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- 质量管理 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="qualityDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-chart-line"></i> 质量管理
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="qualityDropdown">
+                            <li><a class="dropdown-item {% if 'quality_monitoring_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:quality_monitoring_module' %}">
+                                <i class="fas fa-check-circle me-2"></i>质量监控
+                            </a></li>
+                            <li><a class="dropdown-item {% if 'exception_handling_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:exception_handling_module' %}">
+                                <i class="fas fa-exclamation-triangle me-2"></i>异常处理
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- 成本管理 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="costDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-dollar-sign"></i> 成本管理
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="costDropdown">
+                            <li><a class="dropdown-item {% if 'cost_analysis_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:cost_analysis_module' %}">
+                                <i class="fas fa-calculator me-2"></i>成本分析
+                            </a></li>
+                            <li><a class="dropdown-item {% if 'change_order_module' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:change_order_module' %}">
+                                <i class="fas fa-exchange-alt me-2"></i>换单管理
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- 其他功能模块 -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'announcements' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:announcements' %}">
+                            <i class="fas fa-bullhorn"></i> 公告通知
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'documents' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:documents' %}">
+                            <i class="fas fa-file-alt"></i> 文档中心
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'authentication:logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> 退出登录
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        
+        <!-- 主内容区域 -->
+        <div class="content-area">
+            <!-- 顶部导航栏 -->
+            <div class="top-navbar">
+                <div>
+                    <h5 class="mb-0">欢迎回来，{{ user.display_name }}！</h5>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {{ user.first_name.0|default:user.username.0|upper }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 主要内容 -->
+            <div class="main-content">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- 未登录时的全屏登录界面 -->
+    <div class="login-container">
+        <div class="login-card">
+            {% block login_content %}{% endblock %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <script>
+        // 确保Bootstrap正确加载
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Bootstrap version:', typeof bootstrap !== 'undefined' ? 'loaded' : 'not loaded');
+            
+            // 手动初始化所有dropdown
+            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl);
+            });
+            
+            console.log('Initialized dropdowns:', dropdownList.length);
+            
+            // 添加点击事件监听器来调试
+            dropdownElementList.forEach(function(element) {
+                element.addEventListener('click', function(e) {
+                    console.log('Dropdown clicked:', element.id);
+                });
+            });
+        });
+        
+        // 移动端菜单切换
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+        
+        // 点击内容区域时关闭移动端菜单
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(event.target) && 
+                !menuBtn.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+        
+        // 窗口大小改变时重置菜单状态
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

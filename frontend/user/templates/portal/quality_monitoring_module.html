@@ -1,0 +1,96 @@
+{% extends 'base/base.html' %}
+
+{% block title %}质量监控 - YW Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>质量监控
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">数据时间范围：{{ date_range }}</h6>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-primary" onclick="refreshData()">
+                                <i class="fas fa-sync-alt me-1"></i>刷新数据
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {% if quality_data %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>报告日期</th>
+                                    <th>质量类型</th>
+                                    <th>总件数</th>
+                                    <th>错误件数</th>
+                                    <th>错误率(%)</th>
+                                    <th>改进措施</th>
+                                    <th>异常说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in quality_data %}
+                                <tr>
+                                    <td>{{ data.report_date|date:"Y-m-d" }}</td>
+                                    <td>{{ data.quality_type }}</td>
+                                    <td>{{ data.total_count }}</td>
+                                    <td>{{ data.error_count }}</td>
+                                    <td>
+                                        <span class="badge {% if data.error_rate > 5 %}bg-danger{% elif data.error_rate > 2 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ data.error_rate }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if data.improvement_measures %}
+                                            <span class="text-info" title="{{ data.improvement_measures }}">
+                                                <i class="fas fa-lightbulb"></i> 有改进措施
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">无</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if data.exception_notes %}
+                                            <span class="text-danger" title="{{ data.exception_notes }}">
+                                                <i class="fas fa-exclamation-triangle"></i> 有异常
+                                            </span>
+                                        {% else %}
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle"></i> 正常
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">暂无质量数据</h5>
+                        <p class="text-muted">请检查数据源或联系管理员</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshData() {
+    location.reload();
+}
+</script>
+{% endblock %}

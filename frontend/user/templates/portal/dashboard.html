@@ -1,0 +1,427 @@
+{% extends 'base/base.html' %}
+
+{% block title %}仪表板 - YW Portal{% endblock %}
+
+{% block content %}
+<!-- LAX日报关键指标 -->
+{% if dashboard_stats.latest_report %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>LAX日报关键指标 - {{ dashboard_stats.latest_report.report_date }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ dashboard_stats.delivery_stats.total_cargo|default:0 }}</div>
+                            <div class="metric-label">总货量</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ dashboard_stats.delivery_stats.total_boxes|default:0 }}</div>
+                            <div class="metric-label">总分箱数</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ dashboard_stats.delivery_stats.avg_error_rate|floatformat:2|default:0 }}%</div>
+                            <div class="metric-label">平均错误率</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ dashboard_stats.warehouse_stats.total_attendance|default:0 }}</div>
+                            <div class="metric-label">总出勤人数</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ dashboard_stats.warehouse_stats.total_hours|default:0 }}</div>
+                            <div class="metric-label">总工时</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value">¥{{ dashboard_stats.warehouse_stats.total_cost|floatformat:2|default:0 }}</div>
+                            <div class="metric-label">总成本</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ dashboard_stats.change_order_stats.total_change_orders|default:0 }}</div>
+                            <div class="metric-label">总换单量</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value">{{ dashboard_stats.delivery_stats.total_stranded|default:0 }}</div>
+                            <div class="metric-label">滞留分箱数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 快速导航 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>业务模块快速导航</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        <a href="{% url 'portal:delivery_module' %}" class="btn btn-outline-primary btn-block mb-2">
+                            <i class="fas fa-truck me-2"></i>配送管理
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'portal:warehouse_module' %}" class="btn btn-outline-success btn-block mb-2">
+                            <i class="fas fa-warehouse me-2"></i>仓内管理
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'portal:pickup_module' %}" class="btn btn-outline-info btn-block mb-2">
+                            <i class="fas fa-hand-holding me-2"></i>揽收管理
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'portal:airtransport_module' %}" class="btn btn-outline-warning btn-block mb-2">
+                            <i class="fas fa-plane me-2"></i>空运管理
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'portal:linehaul_module' %}" class="btn btn-outline-secondary btn-block mb-2">
+                            <i class="fas fa-road me-2"></i>干线管理
+                        </a>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'portal:change_order_module' %}" class="btn btn-outline-dark btn-block mb-2">
+                            <i class="fas fa-exchange-alt me-2"></i>换单管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 数据可视化图表 -->
+{% if dashboard_stats.latest_report %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>货量趋势</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="cargoVolumeChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>分箱数趋势</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="boxCountChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>错误率趋势</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="errorRateChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-area me-2"></i>配送达成率</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="deliveryRateChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bullhorn me-2"></i>最新公告</h5>
+            </div>
+            <div class="card-body">
+                {% if announcements %}
+                    {% for announcement in announcements %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 border rounded">
+                        <div>
+                            <h6 class="mb-1">{{ announcement.title }}</h6>
+                            <small class="text-muted">发布者：{{ announcement.author.display_name }}</small>
+                        </div>
+                        <small class="text-muted">{{ announcement.created_at|date:"m-d" }}</small>
+                    </div>
+                    {% endfor %}
+                    <div class="text-center">
+                        <a href="{% url 'portal:announcements' %}" class="btn btn-outline-primary btn-sm">
+                            查看全部公告
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">暂无公告</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>最新文档</h5>
+            </div>
+            <div class="card-body">
+                {% if documents %}
+                    {% for document in documents %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 border rounded">
+                        <div>
+                            <h6 class="mb-1">{{ document.title }}</h6>
+                            <small class="text-muted">分类：{{ document.category }}</small>
+                        </div>
+                        <small class="text-muted">{{ document.created_at|date:"m-d" }}</small>
+                    </div>
+                    {% endfor %}
+                    <div class="text-center">
+                        <a href="{% url 'portal:documents' %}" class="btn btn-outline-primary btn-sm">
+                            查看全部文档
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">暂无文档</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>部门信息</h5>
+            </div>
+            <div class="card-body">
+                {% if departments %}
+                    <div class="row">
+                        {% for department in departments %}
+                        <div class="col-md-4 mb-3">
+                            <div class="p-3 border rounded">
+                                <h6 class="mb-1">{{ department.name }}</h6>
+                                {% if department.manager %}
+                                    <small class="text-muted">负责人：{{ department.manager.display_name }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center">
+                        <a href="{% url 'portal:departments' %}" class="btn btn-outline-primary btn-sm">
+                            查看全部部门
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">暂无部门信息</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.metric-card {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stats-card h6 {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.stats-card .stats-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .metric-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .stats-card {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 加载图表数据
+fetch('{% url "portal:dashboard_api" %}')
+    .then(response => response.json())
+    .then(data => {
+        // 货量趋势图
+        const cargoCtx = document.getElementById('cargoVolumeChart').getContext('2d');
+        new Chart(cargoCtx, {
+            type: 'line',
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: '货量',
+                    data: data.cargo_volume,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // 分箱数趋势图
+        const boxCtx = document.getElementById('boxCountChart').getContext('2d');
+        new Chart(boxCtx, {
+            type: 'bar',
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: '分箱数',
+                    data: data.box_count,
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // 错误率趋势图
+        const errorCtx = document.getElementById('errorRateChart').getContext('2d');
+        new Chart(errorCtx, {
+            type: 'line',
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: '错误率(%)',
+                    data: data.error_rate,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // 配送达成率图
+        const deliveryCtx = document.getElementById('deliveryRateChart').getContext('2d');
+        new Chart(deliveryCtx, {
+            type: 'line',
+            data: {
+                labels: data.dates,
+                datasets: [{
+                    label: '配送达成率(%)',
+                    data: data.delivery_rate,
+                    borderColor: 'rgb(153, 102, 255)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Error loading chart data:', error);
+    });
+</script>
+{% endblock %}

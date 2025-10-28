@@ -1,0 +1,127 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}管理后台首页 - YW Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>管理后台首页</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead">欢迎使用 YW Portal 管理后台！</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <h3>{% if user_count %}{{ user_count }}{% else %}0{% endif %}</h3>
+            <p><i class="fas fa-users me-2"></i>用户总数</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <h3>{% if role_count %}{{ role_count }}{% else %}0{% endif %}</h3>
+            <p><i class="fas fa-user-tag me-2"></i>角色数量</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <h3>{% if resource_count %}{{ resource_count }}{% else %}0{% endif %}</h3>
+            <p><i class="fas fa-folder me-2"></i>资源数量</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <h3>{% if permission_count %}{{ permission_count }}{% else %}0{% endif %}</h3>
+            <p><i class="fas fa-key me-2"></i>权限数量</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>用户管理</h5>
+            </div>
+            <div class="card-body">
+                <p>管理系统用户账户，包括用户信息、权限分配等。</p>
+                <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-primary">
+                    <i class="fas fa-users me-2"></i>管理用户
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-tag me-2"></i>角色权限管理</h5>
+            </div>
+            <div class="card-body">
+                <p>管理角色、资源和权限，实现细粒度的权限控制。</p>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'admin:rbac_role_changelist' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-user-tag me-1"></i>角色
+                    </a>
+                    <a href="{% url 'admin:rbac_resource_changelist' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-folder me-1"></i>资源
+                    </a>
+                    <a href="{% url 'admin:rbac_permission_changelist' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-key me-1"></i>权限
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bullhorn me-2"></i>公告管理</h5>
+            </div>
+            <div class="card-body">
+                <p>管理系统公告和通知。</p>
+                <a href="{% url 'admin:portal_announcement_changelist' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-bullhorn me-1"></i>管理公告
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>文档管理</h5>
+            </div>
+            <div class="card-body">
+                <p>管理系统文档和文件。</p>
+                <a href="{% url 'admin:portal_document_changelist' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-file-alt me-1"></i>管理文档
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>部门管理</h5>
+            </div>
+            <div class="card-body">
+                <p>管理组织架构和部门信息。</p>
+                <a href="{% url 'admin:portal_department_changelist' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-building me-1"></i>管理部门
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

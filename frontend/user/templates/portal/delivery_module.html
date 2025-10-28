@@ -1,0 +1,479 @@
+{% extends 'base/base.html' %}
+
+{% block title %}配送管理 - YW Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 城市切换器 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-truck me-2"></i>配送管理
+                        {% if selected_city %}
+                            <span class="badge bg-primary fs-6 ms-2">{{ selected_city }}</span>
+                        {% endif %}
+                    </h4>
+                    <small class="text-muted">数据范围：{{ date_range }}</small>
+                </div>
+                <div class="card-body">
+                    <!-- 城市选择器 -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="city-selector">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-map-marker-alt me-2"></i>选择城市查看详细数据：
+                                </h6>
+                                
+                                {% if all_cities|length <= 7 %}
+                                <!-- 城市数量少于等于7个时，使用平铺按钮 -->
+                                <div class="btn-group flex-wrap" role="group">
+                                    <a href="{% url 'portal:delivery_module' %}" 
+                                       class="btn {% if not selected_city %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2 me-2">
+                                        <i class="fas fa-globe me-1"></i>全部城市
+                                    </a>
+                                    {% for city in all_cities %}
+                                    <a href="{% url 'portal:delivery_module' %}?city={{ city }}" 
+                                       class="btn {% if selected_city == city %}btn-primary{% else %}btn-outline-primary{% endif %} mb-2 me-2">
+                                        <i class="fas fa-plane me-1"></i>{{ city }}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <!-- 城市数量超过7个时，使用下拉框 -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="dropdown">
+                                            <button class="btn btn-primary dropdown-toggle w-100" type="button" id="cityDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fas fa-city me-2"></i>
+                                                {% if selected_city %}
+                                                    {{ selected_city }}
+                                                {% else %}
+                                                    全部城市
+                                                {% endif %}
+                                            </button>
+                                            <ul class="dropdown-menu w-100" aria-labelledby="cityDropdown">
+                                                <li>
+                                                    <a class="dropdown-item {% if not selected_city %}active{% endif %}" href="{% url 'portal:delivery_module' %}">
+                                                        <i class="fas fa-globe me-2"></i>全部城市
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                {% for city in all_cities %}
+                                                <li>
+                                                    <a class="dropdown-item {% if selected_city == city %}active{% endif %}" href="{% url 'portal:delivery_module' %}?city={{ city }}">
+                                                        <i class="fas fa-plane me-2"></i>{{ city }}
+                                                    </a>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center h-100">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                当前显示：{% if selected_city %}{{ selected_city }} 的配送数据{% else %}所有城市的配送数据{% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 统计概览 - 放在城市选择下面 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="text-center p-2 border rounded">
+                                <h5 class="text-primary mb-1">{{ total_cities }}</h5>
+                                <small class="text-muted">{% if selected_city %}当前城市{% else %}覆盖城市{% endif %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-2 border rounded">
+                                <h5 class="text-success mb-1">{{ total_records }}</h5>
+                                <small class="text-muted">总记录数</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-2 border rounded">
+                                <h5 class="text-info mb-1">
+                                    {% if delivery_data %}
+                                        {% for data in delivery_data %}
+                                            {% if forloop.first %}{{ data.cargo_volume|floatformat:0 }}{% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </h5>
+                                <small class="text-muted">最新货量</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-2 border rounded">
+                                <h5 class="text-warning mb-1">
+                                    {% if delivery_data %}
+                                        {% for data in delivery_data %}
+                                            {% if forloop.first %}{{ data.box_count }}{% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </h5>
+                                <small class="text-muted">最新分箱数</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 城市详细数据展示 -->
+                    {% if selected_city %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-6">
+                                            <h5 class="mb-0">
+                                                <i class="fas fa-city me-2"></i>{{ selected_city }} - 详细配送数据
+                                            </h5>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <!-- 日期选择器 -->
+                                            <div class="dropdown">
+                                                <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dateDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-calendar me-2"></i>
+                                                    {% if selected_date %}
+                                                        {{ selected_date|date:"Y-m-d" }}
+                                                    {% else %}
+                                                        选择日期
+                                                    {% endif %}
+                                                </button>
+                                                <ul class="dropdown-menu" aria-labelledby="dateDropdown">
+                                                    {% for date_option in available_dates %}
+                                                    <li>
+                                                        <a class="dropdown-item {% if selected_date == date_option %}active{% endif %}" 
+                                                           href="{% url 'portal:delivery_module' %}?city={{ selected_city }}&date={{ date_option|date:'Y-m-d' }}">
+                                                            <i class="fas fa-calendar-day me-2"></i>{{ date_option|date:"Y-m-d" }}
+                                                            {% if date_option == selected_date %}<span class="badge bg-success ms-2">今天</span>{% endif %}
+                                                        </a>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    {% if delivery_data %}
+                                        {% for data in delivery_data %}
+                                            {% if data.city == selected_city %}
+                                            <!-- 简洁的表格展示 -->
+                                            <div class="row mb-3">
+                                                <div class="col-12">
+                                                    <div class="alert alert-light border mb-3">
+                                                        <h6 class="mb-0">
+                                                            <i class="fas fa-calendar-alt me-2"></i>{{ data.report_date|date:"Y年m月d日" }} 配送数据
+                                                        </h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 基础信息表格 -->
+                                            <div class="table-responsive mb-3">
+                                                <table class="table table-sm table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th width="15%">项目</th>
+                                                            <th width="20%">数值</th>
+                                                            <th width="15%">项目</th>
+                                                            <th width="20%">数值</th>
+                                                            <th width="15%">项目</th>
+                                                            <th width="15%">数值</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td><strong>货量</strong></td>
+                                                            <td class="text-primary">{{ data.cargo_volume|floatformat:0 }}</td>
+                                                            <td><strong>分箱数</strong></td>
+                                                            <td class="text-success">{{ data.box_count }}</td>
+                                                            <td><strong>开放时间</strong></td>
+                                                            <td>{{ data.open_time }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>移除数</strong></td>
+                                                            <td class="text-info">{{ data.removed_packages }}</td>
+                                                            <td><strong>移除率</strong></td>
+                                                            <td class="{% if data.removal_rate > 2 %}text-danger{% elif data.removal_rate > 1.5 %}text-warning{% else %}text-success{% endif %}">
+                                                                {{ data.removal_rate }}%
+                                                            </td>
+                                                            <td><strong>现场情况</strong></td>
+                                                            <td class="text-muted">{{ data.site_situation }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            
+                                            <!-- 配送时效表格 -->
+                                            <div class="table-responsive mb-3">
+                                                <table class="table table-sm table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th colspan="3" class="text-center">配送时效 - 分箱达成率</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td width="33%" class="text-center">
+                                                                <div class="fw-bold {% if data.delivery_rate_day1 >= 95 %}text-success{% elif data.delivery_rate_day1 >= 85 %}text-warning{% else %}text-danger{% endif %}">
+                                                                    {{ data.delivery_rate_day1 }}%
+                                                                </div>
+                                                                <small class="text-muted">第1天达成率</small>
+                                                            </td>
+                                                            <td width="33%" class="text-center">
+                                                                <div class="fw-bold {% if data.delivery_rate_day2 >= 95 %}text-success{% elif data.delivery_rate_day2 >= 85 %}text-warning{% else %}text-danger{% endif %}">
+                                                                    {{ data.delivery_rate_day2 }}%
+                                                                </div>
+                                                                <small class="text-muted">第2天达成率</small>
+                                                            </td>
+                                                            <td width="33%" class="text-center">
+                                                                <div class="fw-bold {% if data.delivery_rate_day3 >= 95 %}text-success{% elif data.delivery_rate_day3 >= 85 %}text-warning{% else %}text-danger{% endif %}">
+                                                                    {{ data.delivery_rate_day3 }}%
+                                                                </div>
+                                                                <small class="text-muted">第3天达成率</small>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            
+                                            <!-- 异常说明 -->
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-bordered">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th>异常说明</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>
+                                                                        {% if data.exception_notes and data.exception_notes != '无异常' %}
+                                                                            <div class="text-danger">
+                                                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                                                {{ data.exception_notes }}
+                                                                            </div>
+                                                                        {% else %}
+                                                                            <div class="text-success">
+                                                                                <i class="fas fa-check-circle me-2"></i>
+                                                                                无异常
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            暂无 {{ selected_city }} 在 {{ selected_date|date:"Y-m-d" }} 的配送数据
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 城市统计概览 -->
+    {% if not selected_city %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>城市配送统计概览
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if city_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>城市</th>
+                                    <th>总货量</th>
+                                    <th>总分箱数</th>
+                                    <th>平均移除率(%)</th>
+                                    <th>第1天达成率(%)</th>
+                                    <th>第2天达成率(%)</th>
+                                    <th>第3天达成率(%)</th>
+                                    <th>总移除数</th>
+                                    <th>异常次数</th>
+                                    <th>报告次数</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for city, stats in city_stats.items %}
+                                <tr>
+                                    <td><span class="badge bg-light text-dark border">{{ city }}</span></td>
+                                    <td><strong>{{ stats.total_cargo|floatformat:0 }}</strong></td>
+                                    <td><strong>{{ stats.total_boxes }}</strong></td>
+                                    <td>
+                                        <span class="{% if stats.avg_removal_rate > 2 %}text-danger{% elif stats.avg_removal_rate > 1.5 %}text-warning{% else %}text-success{% endif %}">
+                                            {{ stats.avg_removal_rate }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="{% if stats.avg_delivery_rate_day1 >= 95 %}text-success{% elif stats.avg_delivery_rate_day1 >= 90 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ stats.avg_delivery_rate_day1 }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="{% if stats.avg_delivery_rate_day2 >= 95 %}text-success{% elif stats.avg_delivery_rate_day2 >= 90 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ stats.avg_delivery_rate_day2 }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="{% if stats.avg_delivery_rate_day3 >= 95 %}text-success{% elif stats.avg_delivery_rate_day3 >= 90 %}text-warning{% else %}text-danger{% endif %}">
+                                            {{ stats.avg_delivery_rate_day3 }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if stats.total_removed > 0 %}
+                                            <span class="text-warning">{{ stats.total_removed }}</span>
+                                        {% else %}
+                                            <span class="text-success">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if stats.exception_count > 0 %}
+                                            <span class="text-danger">{{ stats.exception_count }}</span>
+                                        {% else %}
+                                            <span class="text-success">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="text-muted">{{ stats.report_count }}</span></td>
+                                    <td>
+                                        <a href="{% url 'portal:delivery_module' %}?city={{ city }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>查看详情
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">暂无城市统计数据</h5>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.city-selector {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.city-selector .dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.city-selector .dropdown-item {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.city-selector .dropdown-item:hover {
+    background-color: #e9ecef;
+    transform: translateX(2px);
+}
+
+.city-selector .dropdown-item.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.city-selector .dropdown-item.active:hover {
+    background-color: #0b5ed7;
+    transform: translateX(2px);
+}
+
+.btn-group .btn {
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stats-card {
+    background: linear-gradient(135deg, var(--bs-primary), var(--bs-primary-rgb));
+    color: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-card h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card p {
+    margin-bottom: 0;
+    opacity: 0.9;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 初始化工具提示
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+</script>
+{% endblock %}

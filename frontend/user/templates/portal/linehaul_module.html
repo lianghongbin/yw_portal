@@ -1,0 +1,208 @@
+{% extends 'base/base.html' %}
+
+{% block title %}干线管理模块 - YW Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-road me-2"></i>干线管理模块</h4>
+                <small class="text-muted">数据范围：{{ date_range }}</small>
+            </div>
+            <div class="card-body">
+                {% if linehaul_data %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>报告日期</th>
+                                    <th>供应商</th>
+                                    <th>发运类型</th>
+                                    <th>车型及次数</th>
+                                    <th>计费逻辑</th>
+                                    <th>异常说明</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in linehaul_data %}
+                                <tr>
+                                    <td>{{ data.report_date }}</td>
+                                    <td>{{ data.supplier }}</td>
+                                    <td><span class="badge bg-secondary">{{ data.transport_type }}</span></td>
+                                    <td>{{ data.vehicle_type_count }}</td>
+                                    <td>{{ data.billing_logic }}</td>
+                                    <td>
+                                        {% if data.exception_notes %}
+                                            <small class="text-danger" data-bs-toggle="tooltip" title="{{ data.exception_notes }}">
+                                                {{ data.exception_notes|truncatechars:30 }}
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">无异常</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 统计摘要 -->
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h5>{{ linehaul_data|length }}</h5>
+                                    <p class="mb-0">总记录数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% for data in linehaul_data %}
+                                            {% if forloop.first %}{{ data.vehicle_type_count }}{% endif %}
+                                        {% empty %}
+                                            0
+                                        {% endfor %}
+                                    </h5>
+                                    <p class="mb-0">最新车型次数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% regroup linehaul_data by supplier as supplier_groups %}
+                                        {{ supplier_groups|length }}
+                                    </h5>
+                                    <p class="mb-0">供应商数量</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h5>
+                                        {% regroup linehaul_data by transport_type as type_groups %}
+                                        {{ type_groups|length }}
+                                    </h5>
+                                    <p class="mb-0">发运类型数</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 供应商分析 -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>供应商分析</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>供应商</th>
+                                                    <th>发运类型</th>
+                                                    <th>车型次数</th>
+                                                    <th>计费逻辑</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% regroup linehaul_data by supplier as supplier_groups %}
+                                                {% for group in supplier_groups %}
+                                                <tr>
+                                                    <td>{{ group.grouper }}</td>
+                                                    <td>
+                                                        {% for item in group.list %}
+                                                            {% if forloop.first %}{{ item.transport_type }}{% endif %}
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td>
+                                                        {% for item in group.list %}
+                                                            {% if forloop.first %}{{ item.vehicle_type_count }}{% endif %}
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td>
+                                                        {% for item in group.list %}
+                                                            {% if forloop.first %}{{ item.billing_logic }}{% endif %}
+                                                        {% endfor %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>发运类型分析</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>发运类型</th>
+                                                    <th>使用次数</th>
+                                                    <th>占比</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% regroup linehaul_data by transport_type as type_groups %}
+                                                {% for group in type_groups %}
+                                                <tr>
+                                                    <td>{{ group.grouper }}</td>
+                                                    <td>{{ group.list|length }}</td>
+                                                    <td>
+                                                        {% widthratio group.list|length linehaul_data|length 100 %}%
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-road fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">暂无干线数据</h5>
+                        <p class="text-muted">请等待管理员发布干线数据</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="text-center">
+            <a href="{% url 'portal:dashboard' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>返回仪表板
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 初始化工具提示
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+</script>
+{% endblock %}

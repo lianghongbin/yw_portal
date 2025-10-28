@@ -115,7 +115,7 @@
                                                         <td><strong>产出包裹数</strong></td>
                                                         <td class="text-info">{{ data.packages_produced|floatformat:0 }}</td>
                                                         <td><strong>工时成本</strong></td>
-                                                        <td class="text-warning">¥{{ data.attendance_count|mul:data.actual_hours|mul:20|floatformat:0 }}</td>
+                                                        <td class="text-warning">¥{{ data.yesterday_cost|floatformat:0 }}</td>
                                                     </tr>
                                                     <tr>
                                                         <td><strong>昨日成本</strong></td>

@@ -1,114 +1,157 @@
 {% extends 'base/base.html' %}
 
-{% block title %}揽收管理模块 - YW Portal{% endblock %}
+{% block title %}换单揽收 - YW Portal{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="mb-0"><i class="fas fa-hand-holding me-2"></i>揽收管理模块</h4>
-            </div>
-            <div class="card-body">
-                {% if pickup_data %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>报告日期</th>
-                                    <th>揽收区域</th>
-                                    <th>揽收情况</th>
-                                    <th>回库件数</th>
-                                    <th>异常说明</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for data in pickup_data %}
-                                <tr>
-                                    <td>{{ data.report_date }}</td>
-                                    <td><span class="badge bg-primary">{{ data.pickup_area }}</span></td>
-                                    <td>{{ data.pickup_situation }}</td>
-                                    <td>{{ data.return_count }}</td>
-                                    <td>
-                                        {% if data.exception_notes %}
-                                            <small class="text-danger" data-bs-toggle="tooltip" title="{{ data.exception_notes }}">
-                                                {{ data.exception_notes|truncatechars:50 }}
-                                            </small>
-                                        {% else %}
-                                            <small class="text-muted">无异常</small>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+<div class="container-fluid">
+    <!-- 日期选择器 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-hand-holding me-2"></i>换单揽收
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- 日期选择器 -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="date-selector">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-calendar-alt me-2"></i>选择日期
+                                </h6>
+                                <div class="btn-group" role="group">
+                                    {% for date_option in available_dates %}
+                                    <a href="{% url 'portal:pickup_module' %}?date={{ date_option|date:'Y-m-d' }}" 
+                                       class="btn {% if date_option == selected_date %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">
+                                        <i class="fas fa-calendar-day me-1"></i>{{ date_option|date:"m-d" }}
+                                        {% if date_option == selected_date %}<span class="badge bg-light text-primary ms-1">选中</span>{% endif %}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- 统计摘要 -->
-                    <div class="row mt-4">
-                        <div class="col-md-4">
-                            <div class="card bg-primary text-white">
-                                <div class="card-body text-center">
-                                    <h5>{{ pickup_data|length }}</h5>
-                                    <p class="mb-0">总记录数</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-success text-white">
-                                <div class="card-body text-center">
-                                    <h5>
-                                        {% for data in pickup_data %}
-                                            {% if forloop.first %}{{ data.return_count }}{% endif %}
-                                        {% empty %}
-                                            0
-                                        {% endfor %}
-                                    </h5>
-                                    <p class="mb-0">最新回库件数</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-info text-white">
-                                <div class="card-body text-center">
-                                    <h5>
-                                        {% regroup pickup_data by pickup_area as area_groups %}
-                                        {{ area_groups|length }}
-                                    </h5>
-                                    <p class="mb-0">揽收区域数</p>
-                                </div>
+                    <!-- 昨日BBC - 换单数据 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3">
+                                <i class="fas fa-exchange-alt me-2"></i>{{ selected_date|date:"Y年m月d日" }} - 昨日BBC
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-warning">
+                                        <tr>
+                                            <th width="30%">换单渠道</th>
+                                            <th width="25%">换单量</th>
+                                            <th width="45%">异常说明</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if today_exchange_data %}
+                                            {% for data in today_exchange_data %}
+                                            <tr>
+                                                <td class="text-primary"><strong>{{ data.exchange_channel }}</strong></td>
+                                                <td class="text-center"><strong>{{ data.exchange_count|floatformat:0 }}</strong></td>
+                                                <td>
+                                                    {% if data.exception_notes %}
+                                                        <span class="text-danger">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                                            {{ data.exception_notes }}
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    暂无 {{ selected_date|date:"Y-m-d" }} 的换单数据
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-hand-holding fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">暂无揽收数据</h5>
-                        <p class="text-muted">请等待管理员发布揽收数据</p>
+                    
+                    <!-- 昨日揽收 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3">
+                                <i class="fas fa-truck-pickup me-2"></i>{{ selected_date|date:"Y年m月d日" }} - 昨日揽收
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-warning">
+                                        <tr>
+                                            <th width="20%">揽收区域</th>
+                                            <th width="15%">揽收情况</th>
+                                            <th width="25%">回库件数</th>
+                                            <th width="40%">异常说明</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if today_pickup_data %}
+                                            {% for data in today_pickup_data %}
+                                            <tr>
+                                                <td class="text-primary"><strong>{{ data.pickup_area }}</strong></td>
+                                                <td class="text-center">{{ data.pickup_situation }}</td>
+                                                <td class="text-center">
+                                                    <strong class="text-danger">{{ data.return_count_formatted }}</strong>
+                                                </td>
+                                                <td>
+                                                    {% if data.exception_notes %}
+                                                        <span class="text-danger">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                                            {{ data.exception_notes }}
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    暂无 {{ selected_date|date:"Y-m-d" }} 的揽收数据
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                {% endif %}
+                </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="text-center">
-            <a href="{% url 'portal:dashboard' %}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>返回仪表板
-            </a>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-// 初始化工具提示
-var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
-})
-</script>
+{% block extra_css %}
+<style>
+    .table-warning {
+        background-color: #fff3cd;
+    }
+    .date-selector {
+        margin-bottom: 1.5rem;
+    }
+    .date-selector .btn-group {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .date-selector .btn {
+        margin-bottom: 0.5rem;
+    }
+</style>
 {% endblock %}

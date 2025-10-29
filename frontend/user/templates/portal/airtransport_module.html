@@ -1,21 +1,37 @@
 {% extends 'base/base.html' %}
 
-{% block title %}空运管理模块 - YW Portal{% endblock %}
+{% block title %}空运管理 - YW Portal{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h4 class="mb-0"><i class="fas fa-plane me-2"></i>空运管理模块</h4>
+                <h4 class="mb-0"><i class="fas fa-plane me-2"></i>空运管理</h4>
             </div>
             <div class="card-body">
-                {% if airtransport_data %}
+                <!-- 日期选择器 -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>选择日期：</strong></label>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for date_option in available_dates %}
+                        <a href="{% url 'portal:airtransport_module' %}?date={{ date_option|date:'Y-m-d' }}" 
+                           class="btn {% if date_option == selected_date %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">
+                            <i class="fas fa-calendar-day me-1"></i>{{ date_option|date:"m-d" }}
+                            {% if date_option == selected_date %}<span class="badge bg-light text-primary ms-1">选中</span>{% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- 今日空运表格 -->
+                <div class="mb-4">
+                    <h5 class="mb-3"><i class="fas fa-plane-departure me-2"></i>今日空运</h5>
+                    {% if today_airtransport_data %}
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>报告日期</th>
                                     <th>飞航城市</th>
                                     <th>揽收日</th>
                                     <th>货物出仓时间</th>
@@ -23,120 +39,22 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for data in airtransport_data %}
+                                {% for data in today_airtransport_data %}
                                 <tr>
-                                    <td>{{ data.report_date }}</td>
-                                    <td><span class="badge bg-warning">{{ data.flight_city }}</span></td>
-                                    <td>{{ data.pickup_date }}</td>
+                                    <td><strong>{{ data.flight_city }}</strong></td>
+                                    <td>{{ data.pickup_date|date:"m/d" }}</td>
                                     <td>{{ data.cargo_out_time }}</td>
-                                    <td>{{ data.box_count }}</td>
+                                    <td class="text-center">{{ data.box_count }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    
-                    <!-- 统计摘要 -->
-                    <div class="row mt-4">
-                        <div class="col-md-3">
-                            <div class="card bg-primary text-white">
-                                <div class="card-body text-center">
-                                    <h5>{{ airtransport_data|length }}</h5>
-                                    <p class="mb-0">总记录数</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-success text-white">
-                                <div class="card-body text-center">
-                                    <h5>
-                                        {% for data in airtransport_data %}
-                                            {% if forloop.first %}{{ data.box_count }}{% endif %}
-                                        {% empty %}
-                                            0
-                                        {% endfor %}
-                                    </h5>
-                                    <p class="mb-0">最新箱数</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-info text-white">
-                                <div class="card-body text-center">
-                                    <h5>
-                                        {% regroup airtransport_data by flight_city as city_groups %}
-                                        {{ city_groups|length }}
-                                    </h5>
-                                    <p class="mb-0">飞航城市数</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card bg-warning text-white">
-                                <div class="card-body text-center">
-                                    <h5>
-                                        {% for data in airtransport_data %}
-                                            {% if forloop.first %}{{ data.cargo_out_time }}{% endif %}
-                                        {% empty %}
-                                            --
-                                        {% endfor %}
-                                    </h5>
-                                    <p class="mb-0">最新出仓时间</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 飞航城市分析 -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>飞航城市分析</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        {% regroup airtransport_data by flight_city as city_groups %}
-                                        {% for group in city_groups %}
-                                        <div class="col-md-4 mb-3">
-                                            <div class="card border-primary">
-                                                <div class="card-body text-center">
-                                                    <h5 class="card-title">{{ group.grouper }}</h5>
-                                                    <p class="card-text">
-                                                        {% for item in group.list %}
-                                                            {% if forloop.first %}
-                                                                箱数：{{ item.box_count }}<br>
-                                                                出仓时间：{{ item.cargo_out_time }}
-                                                            {% endif %}
-                                                        {% endfor %}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-plane fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">暂无空运数据</h5>
-                        <p class="text-muted">请等待管理员发布空运数据</p>
-                    </div>
-                {% endif %}
+                    {% else %}
+                    <div class="alert alert-info">暂无数据</div>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="text-center">
-            <a href="{% url 'portal:dashboard' %}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>返回仪表板
-            </a>
         </div>
     </div>
 </div>

@@ -21,6 +21,7 @@ urlpatterns = [
     path('pickup/', views.pickup_module_view, name='pickup_module'),
     path('airtransport/', views.airtransport_module_view, name='airtransport_module'),
     path('linehaul/', views.linehaul_module_view, name='linehaul_module'),
+    path('airtransport-linehaul/', views.airtransport_linehaul_module_view, name='airtransport_linehaul_module'),
     path('change-order/', views.change_order_module_view, name='change_order_module'),
     
     # 设备管理模块

@@ -47,6 +47,7 @@ class DailyReport(BaseModel):
 class DeliveryReport(BaseModel):
     """配送报告 - 基于LAX日报实际数据结构"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='delivery_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     city = models.CharField(max_length=10, verbose_name='配送城市')
     
     # 基础数据
@@ -72,15 +73,24 @@ class DeliveryReport(BaseModel):
     class Meta:
         verbose_name = '配送报告'
         verbose_name_plural = '配送报告'
-        ordering = ['city']
+        ordering = ['-report_date', 'city']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.city}配送报告 - {self.daily_report.report_date}"
+        return f"{self.city}配送报告 - {self.report_date}"
 
 
 class WarehouseReport(BaseModel):
     """仓内报告 - 基于LAX日报实际数据结构"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='warehouse_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     contractor_company = models.CharField(max_length=100, verbose_name='劳务公司')
     attendance_count = models.PositiveIntegerField(verbose_name='今日到岗人数')
     actual_attendance_count = models.PositiveIntegerField(verbose_name='出勤人数', default=0)
@@ -101,15 +111,49 @@ class WarehouseReport(BaseModel):
     class Meta:
         verbose_name = '仓内报告'
         verbose_name_plural = '仓内报告'
-        ordering = ['contractor_company']
+        ordering = ['-report_date', 'contractor_company']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.contractor_company}仓内报告 - {self.daily_report.report_date}"
+        return f"{self.contractor_company}仓内报告 - {self.report_date}"
+
+
+class ExchangeOrderReport(BaseModel):
+    """换单报告 - 昨日BBC"""
+    daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='exchange_order_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
+    exchange_channel = models.CharField(max_length=100, verbose_name='换单渠道')
+    exchange_count = models.PositiveIntegerField(verbose_name='换单量')
+    exception_notes = models.TextField(blank=True, verbose_name='异常说明')
+    
+    class Meta:
+        verbose_name = '换单报告'
+        verbose_name_plural = '换单报告'
+        ordering = ['-report_date', 'exchange_channel']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+    
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.exchange_channel}换单报告 - {self.report_date}"
 
 
 class PickupReport(BaseModel):
     """揽收报告"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='pickup_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     pickup_area = models.CharField(max_length=20, verbose_name='揽收区域')
     pickup_situation = models.TextField(verbose_name='揽收情况')
     return_count = models.PositiveIntegerField(verbose_name='回库件数')
@@ -118,15 +162,24 @@ class PickupReport(BaseModel):
     class Meta:
         verbose_name = '揽收报告'
         verbose_name_plural = '揽收报告'
-        ordering = ['pickup_area']
+        ordering = ['-report_date', 'pickup_area']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.pickup_area}揽收报告 - {self.daily_report.report_date}"
+        return f"{self.pickup_area}揽收报告 - {self.report_date}"
 
 
 class AirTransportReport(BaseModel):
     """空运报告"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='air_transport_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     flight_city = models.CharField(max_length=10, verbose_name='飞航城市')
     pickup_date = models.DateField(verbose_name='揽收日')
     cargo_out_time = models.TimeField(verbose_name='货物出仓时间')
@@ -135,15 +188,24 @@ class AirTransportReport(BaseModel):
     class Meta:
         verbose_name = '空运报告'
         verbose_name_plural = '空运报告'
-        ordering = ['flight_city']
+        ordering = ['-report_date', 'flight_city']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.flight_city}空运报告 - {self.daily_report.report_date}"
+        return f"{self.flight_city}空运报告 - {self.report_date}"
 
 
 class LinehaulReport(BaseModel):
     """干线报告"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='linehaul_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     supplier = models.CharField(max_length=100, verbose_name='干线供应商')
     transport_type = models.CharField(max_length=50, verbose_name='发运类型')
     vehicle_type_count = models.PositiveIntegerField(verbose_name='车型及次数')
@@ -153,15 +215,24 @@ class LinehaulReport(BaseModel):
     class Meta:
         verbose_name = '干线报告'
         verbose_name_plural = '干线报告'
-        ordering = ['supplier']
+        ordering = ['-report_date', 'supplier']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.supplier}干线报告 - {self.daily_report.report_date}"
+        return f"{self.supplier}干线报告 - {self.report_date}"
 
 
 class ChangeOrderChannel(BaseModel):
     """换单渠道"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='change_order_channels', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     channel_name = models.CharField(max_length=100, verbose_name='换单渠道')
     change_order_count = models.PositiveIntegerField(verbose_name='换单量')
     exception_notes = models.TextField(blank=True, verbose_name='异常说明')
@@ -169,15 +240,24 @@ class ChangeOrderChannel(BaseModel):
     class Meta:
         verbose_name = '换单渠道'
         verbose_name_plural = '换单渠道'
-        ordering = ['channel_name']
+        ordering = ['-report_date', 'channel_name']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.channel_name}换单渠道 - {self.daily_report.report_date}"
+        return f"{self.channel_name}换单渠道 - {self.report_date}"
 
 
 class SortingMachineReport(BaseModel):
     """分拣机报告"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='sorting_machine_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     machine_name = models.CharField(max_length=50, verbose_name='分拣机名称')
     machine_type = models.CharField(max_length=30, verbose_name='分拣机类型')
     throughput = models.PositiveIntegerField(verbose_name='处理量(件/小时)')
@@ -189,15 +269,24 @@ class SortingMachineReport(BaseModel):
     class Meta:
         verbose_name = '分拣机报告'
         verbose_name_plural = '分拣机报告'
-        ordering = ['machine_name']
+        ordering = ['-report_date', 'machine_name']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.machine_name}分拣机报告 - {self.daily_report.report_date}"
+        return f"{self.machine_name}分拣机报告 - {self.report_date}"
 
 
 class EquipmentReport(BaseModel):
     """设备报告"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='equipment_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     equipment_name = models.CharField(max_length=50, verbose_name='设备名称')
     equipment_type = models.CharField(max_length=30, verbose_name='设备类型')
     status = models.CharField(max_length=20, verbose_name='运行状态')
@@ -208,15 +297,24 @@ class EquipmentReport(BaseModel):
     class Meta:
         verbose_name = '设备报告'
         verbose_name_plural = '设备报告'
-        ordering = ['equipment_name']
+        ordering = ['-report_date', 'equipment_name']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.equipment_name}设备报告 - {self.daily_report.report_date}"
+        return f"{self.equipment_name}设备报告 - {self.report_date}"
 
 
 class QualityReport(BaseModel):
     """质量报告"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='quality_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     quality_type = models.CharField(max_length=30, verbose_name='质量类型')
     total_count = models.PositiveIntegerField(verbose_name='总件数')
     error_count = models.PositiveIntegerField(verbose_name='错误件数')
@@ -227,15 +325,24 @@ class QualityReport(BaseModel):
     class Meta:
         verbose_name = '质量报告'
         verbose_name_plural = '质量报告'
-        ordering = ['quality_type']
+        ordering = ['-report_date', 'quality_type']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.quality_type}质量报告 - {self.daily_report.report_date}"
+        return f"{self.quality_type}质量报告 - {self.report_date}"
 
 
 class CostReport(BaseModel):
     """成本报告"""
     daily_report = models.ForeignKey(DailyReport, on_delete=models.CASCADE, related_name='cost_reports', verbose_name='日报')
+    report_date = models.DateField(verbose_name='报告日期', db_index=True, null=True, blank=True)
     cost_category = models.CharField(max_length=30, verbose_name='成本类别')
     planned_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='计划成本')
     actual_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='实际成本')
@@ -246,10 +353,18 @@ class CostReport(BaseModel):
     class Meta:
         verbose_name = '成本报告'
         verbose_name_plural = '成本报告'
-        ordering = ['cost_category']
+        ordering = ['-report_date', 'cost_category']
+        indexes = [
+            models.Index(fields=['report_date']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.daily_report:
+            self.report_date = self.daily_report.report_date
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.cost_category}成本报告 - {self.daily_report.report_date}"
+        return f"{self.cost_category}成本报告 - {self.report_date}"
 
 
 class Department(BaseModel):

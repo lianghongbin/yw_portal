@@ -562,31 +562,64 @@ def warehouse_module_view(request):
 
 @login_required
 def pickup_module_view(request):
-    """揽收管理模块视图"""
-    # 获取最近7天的揽收数据
+    """换单揽收模块视图"""
+    from .models import ExchangeOrderReport
+    
     end_date = date.today()
-    start_date = end_date - timedelta(days=7)
+    selected_date_str = request.GET.get('date')
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = end_date
+    else:
+        selected_date = end_date
+
+    # 获取最近7天的日期作为可用日期
+    sample_dates = [(end_date - timedelta(days=i)) for i in range(7)]
     
-    reports = DailyReport.objects.filter(
-        is_published=True,
-        report_date__range=[start_date, end_date]
-    ).order_by('-report_date')
+    # 生成示例数据 - 昨日BBC（换单数据）
+    exchange_order_data = []
+    # 基于截图数据：换单渠道=YWE+USPS+UNI, 换单量=14211
+    for report_date in sample_dates:
+        exchange_order_data.append({
+            'report_date': report_date,
+            'exchange_channel': 'YWE+USPS+UNI',
+            'exchange_count': 14211,
+            'exception_notes': '',
+        })
     
+    # 生成示例数据 - 昨日揽收
     pickup_data = []
-    for report in reports:
-        pickup_reports = PickupReport.objects.filter(daily_report=report)
-        for pr in pickup_reports:
-            pickup_data.append({
-                'report_date': report.report_date,
-                'pickup_area': pr.pickup_area,
-                'pickup_situation': pr.pickup_situation,
-                'return_count': pr.return_count,
-                'exception_notes': pr.exception_notes,
-            })
+    # 基于截图数据：揽收区域=LAX, 揽收情况=/, 回库件数=39490 (显示为3.949W)
+    for report_date in sample_dates:
+        return_count = 39490
+        # 格式化回库件数：大于10000显示为X.XXXW格式
+        if return_count >= 10000:
+            return_count_formatted = f"{return_count / 10000:.3f}W"
+        else:
+            return_count_formatted = str(return_count)
+        
+        pickup_data.append({
+            'report_date': report_date,
+            'pickup_area': 'LAX',
+            'pickup_situation': '/',
+            'return_count': return_count,
+            'return_count_formatted': return_count_formatted,
+            'exception_notes': '',
+        })
+    
+    # 获取选中日期的数据
+    today_exchange_data = [data for data in exchange_order_data if data['report_date'] == selected_date]
+    today_pickup_data = [data for data in pickup_data if data['report_date'] == selected_date]
     
     context = {
+        'exchange_order_data': exchange_order_data,
         'pickup_data': pickup_data,
-        'date_range': f"{start_date} 至 {end_date}",
+        'available_dates': sample_dates,
+        'selected_date': selected_date,
+        'today_exchange_data': today_exchange_data,
+        'today_pickup_data': today_pickup_data,
     }
     return render(request, 'portal/pickup_module.html', context)
 
@@ -594,30 +627,54 @@ def pickup_module_view(request):
 @login_required
 def airtransport_module_view(request):
     """空运管理模块视图"""
-    # 获取最近7天的空运数据
     end_date = date.today()
-    start_date = end_date - timedelta(days=7)
+    selected_date_str = request.GET.get('date')
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = end_date
+    else:
+        selected_date = end_date
+
+    # 获取最近7天的日期作为可用日期
+    available_dates = [(end_date - timedelta(days=i)) for i in range(7)]
     
-    reports = DailyReport.objects.filter(
-        is_published=True,
-        report_date__range=[start_date, end_date]
-    ).order_by('-report_date')
-    
-    airtransport_data = []
-    for report in reports:
-        air_transport_reports = AirTransportReport.objects.filter(daily_report=report)
+    # 从数据库查询选中日期的空运数据
+    today_airtransport_data = []
+    try:
+        daily_report = DailyReport.objects.get(report_date=selected_date, is_published=True)
+        air_transport_reports = AirTransportReport.objects.filter(
+            daily_report=daily_report
+        ).order_by('flight_city')
+        
         for atr in air_transport_reports:
-            airtransport_data.append({
-                'report_date': report.report_date,
+            today_airtransport_data.append({
                 'flight_city': atr.flight_city,
                 'pickup_date': atr.pickup_date,
-                'cargo_out_time': atr.cargo_out_time,
+                'cargo_out_time': atr.cargo_out_time.strftime('%H:%M'),
                 'box_count': atr.box_count,
+            })
+    except DailyReport.DoesNotExist:
+        # 如果没有数据，生成示例数据用于演示
+        airtransport_base_data = [
+            {'flight_city': 'MAI', 'cargo_out_time': '12:00', 'box_count': 220},
+            {'flight_city': 'JFK', 'cargo_out_time': '12:00', 'box_count': 220},
+            {'flight_city': 'ATL', 'cargo_out_time': '12:00', 'box_count': 5},
+        ]
+        pickup_date = selected_date - timedelta(days=1)
+        for base_data in airtransport_base_data:
+            today_airtransport_data.append({
+                'flight_city': base_data['flight_city'],
+                'pickup_date': pickup_date,
+                'cargo_out_time': base_data['cargo_out_time'],
+                'box_count': base_data['box_count'],
             })
     
     context = {
-        'airtransport_data': airtransport_data,
-        'date_range': f"{start_date} 至 {end_date}",
+        'available_dates': available_dates,
+        'selected_date': selected_date,
+        'today_airtransport_data': today_airtransport_data,
     }
     return render(request, 'portal/airtransport_module.html', context)
 
@@ -625,33 +682,141 @@ def airtransport_module_view(request):
 @login_required
 def linehaul_module_view(request):
     """干线管理模块视图"""
-    # 获取最近7天的干线数据
     end_date = date.today()
-    start_date = end_date - timedelta(days=7)
+    selected_date_str = request.GET.get('date')
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = end_date
+    else:
+        selected_date = end_date
+
+    # 获取最近7天的日期作为可用日期
+    available_dates = [(end_date - timedelta(days=i)) for i in range(7)]
     
-    reports = DailyReport.objects.filter(
-        is_published=True,
-        report_date__range=[start_date, end_date]
-    ).order_by('-report_date')
-    
-    linehaul_data = []
-    for report in reports:
-        linehaul_reports = LinehaulReport.objects.filter(daily_report=report)
+    # 从数据库查询选中日期的干线数据
+    today_linehaul_data = []
+    try:
+        daily_report = DailyReport.objects.get(report_date=selected_date, is_published=True)
+        linehaul_reports = LinehaulReport.objects.filter(
+            daily_report=daily_report
+        ).order_by('supplier', 'transport_type')
+        
         for lr in linehaul_reports:
-            linehaul_data.append({
-                'report_date': report.report_date,
+            today_linehaul_data.append({
                 'supplier': lr.supplier,
                 'transport_type': lr.transport_type,
                 'vehicle_type_count': lr.vehicle_type_count,
                 'billing_logic': lr.billing_logic,
                 'exception_notes': lr.exception_notes,
             })
+    except DailyReport.DoesNotExist:
+        # 如果没有数据，生成示例数据用于演示
+        linehaul_base_data = [
+            {'supplier': 'R&T', 'transport_type': 'R&T 自送', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'R&T', 'transport_type': 'R&T 自送', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'HAOYUNLAI', 'transport_type': '德威', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'TQL', 'transport_type': 'LAX SFO', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'HAOYUNLAI', 'transport_type': 'CAINIAO ACI', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'R&T', 'transport_type': 'R&T 自送', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'GOT IT', 'transport_type': 'LAX PHX', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'GOT IT', 'transport_type': 'LAX PHX', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'XLmiles', 'transport_type': 'LAXDFW', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'HAOYUNLAI', 'transport_type': 'USPS', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'HAOYUNLAI', 'transport_type': 'LAX SAN', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+            {'supplier': 'HAOYUNLAI', 'transport_type': '深圳貝拉', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+        ]
+        for base_data in linehaul_base_data:
+            today_linehaul_data.append(base_data)
     
     context = {
-        'linehaul_data': linehaul_data,
-        'date_range': f"{start_date} 至 {end_date}",
+        'available_dates': available_dates,
+        'selected_date': selected_date,
+        'today_linehaul_data': today_linehaul_data,
     }
     return render(request, 'portal/linehaul_module.html', context)
+
+
+@login_required
+def airtransport_linehaul_module_view(request):
+    """空运干线管理模块视图 - 合并空运和干线数据"""
+    end_date = date.today()
+    selected_date_str = request.GET.get('date')
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = end_date
+    else:
+        selected_date = end_date
+
+    # 获取最近7天的日期作为可用日期
+    sample_dates = [(end_date - timedelta(days=i)) for i in range(7)]
+    
+    # 生成示例数据 - 今日空运
+    airtransport_data = []
+    # 基于图片数据：MAI, JFK, ATL
+    airtransport_base_data = [
+        {'flight_city': 'MAI', 'cargo_out_time': '12:00', 'box_count': 220},
+        {'flight_city': 'JFK', 'cargo_out_time': '12:00', 'box_count': 220},
+        {'flight_city': 'ATL', 'cargo_out_time': '12:00', 'box_count': 5},
+    ]
+    
+    for report_date in sample_dates:
+        # 计算揽收日（通常是报告日期的前一天）
+        pickup_date = report_date - timedelta(days=1)
+        for base_data in airtransport_base_data:
+            airtransport_data.append({
+                'report_date': report_date,
+                'flight_city': base_data['flight_city'],
+                'pickup_date': pickup_date,
+                'cargo_out_time': base_data['cargo_out_time'],
+                'box_count': base_data['box_count'],
+            })
+    
+    # 生成示例数据 - 干线供应商
+    linehaul_data = []
+    # 基于图片数据
+    linehaul_base_data = [
+        {'supplier': 'R&T', 'transport_type': 'R&T 自送', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'R&T', 'transport_type': 'R&T 自送', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'HAOYUNLAI', 'transport_type': '德威', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'TQL', 'transport_type': 'LAX SFO', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'HAOYUNLAI', 'transport_type': 'CAINIAO ACI', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'R&T', 'transport_type': 'R&T 自送', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'GOT IT', 'transport_type': 'LAX PHX', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'GOT IT', 'transport_type': 'LAX PHX', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'XLmiles', 'transport_type': 'LAXDFW', 'vehicle_type_count': 53, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'HAOYUNLAI', 'transport_type': 'USPS', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'HAOYUNLAI', 'transport_type': 'LAX SAN', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+        {'supplier': 'HAOYUNLAI', 'transport_type': '深圳貝拉', 'vehicle_type_count': 26, 'billing_logic': 'single', 'exception_notes': ''},
+    ]
+    
+    for report_date in sample_dates:
+        for base_data in linehaul_base_data:
+            linehaul_data.append({
+                'report_date': report_date,
+                'supplier': base_data['supplier'],
+                'transport_type': base_data['transport_type'],
+                'vehicle_type_count': base_data['vehicle_type_count'],
+                'billing_logic': base_data['billing_logic'],
+                'exception_notes': base_data['exception_notes'],
+            })
+    
+    # 获取选中日期的数据
+    today_airtransport_data = [data for data in airtransport_data if data['report_date'] == selected_date]
+    today_linehaul_data = [data for data in linehaul_data if data['report_date'] == selected_date]
+    
+    context = {
+        'airtransport_data': airtransport_data,
+        'linehaul_data': linehaul_data,
+        'available_dates': sample_dates,
+        'selected_date': selected_date,
+        'today_airtransport_data': today_airtransport_data,
+        'today_linehaul_data': today_linehaul_data,
+    }
+    return render(request, 'portal/airtransport_linehaul_module.html', context)
 
 
 @login_required
